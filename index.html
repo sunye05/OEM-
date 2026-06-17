@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>龙湖 OEM 品控云台</title>
+  <style>
+    :root {
+      --primary-dark: #003894;
+      --primary-light: #00B0AF;
+      --primary-gradient: linear-gradient(135deg, #003894 0%, #00B0AF 100%);
+      --bg: #f4f6f9;
+      --card-bg: #ffffff;
+      --text: #1f2937;
+      --text-secondary: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.1);
+      --radius: 12px;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, "Microsoft YaHei", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Header */
+    .header {
+      background: var(--primary-gradient);
+      color: #fff;
+      padding: 16px 24px;
+      box-shadow: 0 2px 10px rgba(0, 56, 148, 0.25);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .header-bg-mascot {
+      position: absolute;
+      right: 160px;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 110px;
+      width: auto;
+      opacity: 0.18;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .header-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-slogan {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.85);
+      letter-spacing: 2px;
+      margin-top: 2px;
+    }
+
+    .header-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      height: 64px;
+      width: auto;
+      background-color: #fff;
+      padding: 8px 12px;
+      border-radius: 10px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-subtitle {
+      font-size: 13px;
+      opacity: 0.9;
+      font-weight: 400;
+    }
+
+    /* Footer slogan */
+    .footer-slogan {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      letter-spacing: 3px;
+    }
+
+    .footer-slogan strong {
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .user-role {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .btn-logout {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+
+    .btn-logout:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Login screen */
+    .login-screen {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(0, 176, 175, 0.08) 0%, transparent 25%),
+        radial-gradient(circle at 90% 80%, rgba(0, 56, 148, 0.08) 0%, transparent 25%),
+        var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 400;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 36px;
+      width: min(100%, 400px);
+      box-shadow: var(--shadow-hover);
+      text-align: center;
+    }
+
+    .login-logo {
+      height: 96px;
+      margin-bottom: 20px;
+      background-color: #fff;
+      padding: 12px 24px;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      object-fit: contain;
+    }
+
+    .login-slogan {
+      font-size: 16px;
+      color: var(--primary-light);
+      letter-spacing: 4px;
+      margin-bottom: 24px;
+      font-weight: 600;
+    }
+
+    .login-mascot {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      width: 120px;
+      height: auto;
+      opacity: 0.85;
+      pointer-events: none;
+    }
+
+    .login-mascot-left {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      width: 100px;
+      height: auto;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .login-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 6px;
+    }
+
+    .login-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      text-align: left;
+    }
+
+    .login-error {
+      color: var(--error);
+      font-size: 13px;
+      min-height: 20px;
+      text-align: center;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Section */
+    .section {
+      margin-bottom: 28px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::before {
+      content: "";
+      width: 4px;
+      height: 20px;
+      background: var(--primary-gradient);
+      border-radius: 2px;
+    }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .stat-card::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--primary-gradient);
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+
+    /* Toolbar */
+    .toolbar {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1 1 auto;
+    }
+
+    .search-input {
+      min-width: 220px;
+      flex: 1 1 auto;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(0, 176, 175, 0.15);
+    }
+
+    .filter-select {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff;
+      min-width: 140px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(0, 176, 175, 0.15);
+    }
+
+    /* Card panels */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    /* Form */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .form-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .required::after {
+      content: " *";
+      color: var(--error);
+    }
+
+    .form-control,
+    .form-select,
+    .form-textarea {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-control:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(0, 176, 175, 0.15);
+    }
+
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 11px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.92;
+      box-shadow: 0 4px 12px rgba(0, 56, 148, 0.3);
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: #f9fafb;
+      border-color: #d1d5db;
+    }
+
+    .btn-danger {
+      background: #fff;
+      color: var(--error);
+      border: 1px solid #fecaca;
+    }
+
+    .btn-danger:hover {
+      background: #fef2f2;
+      border-color: #fca5a5;
+    }
+
+    .btn-sm {
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    .btn-icon {
+      padding: 10px 16px;
+      font-size: 14px;
+    }
+
+    /* Records list */
+    .records-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .record-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+
+    .record-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .record-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .record-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      word-break: break-all;
+    }
+
+    .status-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .status-production {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .status-pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-passed {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-rejected {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .record-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .record-info-row {
+      display: flex;
+      gap: 6px;
+      word-break: break-all;
+    }
+
+    .record-info-label {
+      font-weight: 600;
+      color: var(--text);
+      flex-shrink: 0;
+    }
+
+    .record-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .record-time {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-secondary);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.4;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      padding: 12px 24px;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: auto;
+      min-width: 180px;
+      text-align: center;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast-success {
+      background: var(--success);
+    }
+
+    .toast-error {
+      background: var(--error);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      padding: 20px;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 24px;
+      width: min(100%, 420px);
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-hover);
+      transform: scale(0.96);
+      transition: transform 0.2s;
+    }
+
+    .modal-overlay.show .modal {
+      transform: scale(1);
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .modal-body {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Field settings */
+    .field-settings-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .field-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+
+    .field-option:hover {
+      background: #f3f4f6;
+    }
+
+    .field-option input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary-dark);
+      cursor: pointer;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .form-grid,
+      .records-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .toolbar-group {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header-inner {
+        gap: 12px;
+      }
+
+      .header-left {
+        gap: 12px;
+      }
+
+      .logo {
+        height: 34px;
+      }
+
+      .brand-title {
+        font-size: 16px;
+      }
+
+      .brand-subtitle {
+        font-size: 11px;
+      }
+
+      .user-info {
+        font-size: 12px;
+        gap: 8px;
+      }
+
+      .user-role {
+        display: none;
+      }
+
+      .container {
+        padding: 16px;
+      }
+
+      .stats-grid,
+      .form-grid,
+      .records-grid,
+      .field-settings-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-value {
+        font-size: 28px;
+      }
+
+      .form-actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .toolbar-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-input,
+      .filter-select {
+        width: 100%;
+      }
+
+      .record-header {
+        flex-direction: column;
+      }
+
+      .status-tag {
+        align-self: flex-start;
+      }
+
+      .record-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .modal-actions {
+        flex-direction: column;
+      }
+
+      .login-card {
+        padding: 24px 20px;
+      }
+
+      .header-bg-mascot {
+        right: 20px;
+        height: 80px;
+        opacity: 0.12;
+      }
+
+      .login-mascot,
+      .login-mascot-left {
+        display: none;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .form-group.full-width {
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 登录页 -->
+  <div class="login-screen" id="login-screen">
+    <img
+      src="页面图片/吉祥物.png"
+      alt=""
+      class="login-mascot-left"
+    />
+    <div class="login-card">
+      <img
+        src="页面图片/logo1.jpg"
+        alt="LONGFOR 龙湖"
+        class="login-logo"
+      />
+      <div class="login-title">OEM 品控云台</div>
+      <div class="login-subtitle">实时品控，全程可溯</div>
+      <form class="login-form" id="login-form">
+        <div class="form-group">
+          <label for="login-username" class="form-label required">用户名</label>
+          <input type="text" id="login-username" class="form-control" placeholder="请输入用户名" required />
+        </div>
+        <div class="form-group">
+          <label for="login-password" class="form-label required">密码</label>
+          <input type="password" id="login-password" class="form-control" placeholder="请输入密码" required />
+        </div>
+        <div class="login-error" id="login-error"></div>
+        <button type="submit" class="btn btn-primary">登 录</button>
+      </form>
+    </div>
+    <img
+      src="页面图片/吉祥物.png"
+      alt=""
+      class="login-mascot"
+    />
+  </div>
+
+  <!-- Header -->
+  <header class="header" id="main-header">
+    <img
+      src="页面图片/吉祥物.png"
+      alt=""
+      class="header-bg-mascot"
+    />
+    <div class="header-inner">
+      <div class="header-left">
+        <img
+          src="页面图片/logo1.jpg"
+          alt="LONGFOR 龙湖"
+          class="logo"
+        />
+        <div class="brand">
+          <span class="brand-title">OEM 品控云台</span>
+          <span class="brand-subtitle">实时品控，全程可溯</span>
+        </div>
+      </div>
+      <div class="user-info">
+        <span class="user-role" id="user-role">未登录</span>
+        <button type="button" class="btn-logout" id="btn-logout">退出登录</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" id="main-container">
+    <!-- 统计看板 -->
+    <section class="section" aria-labelledby="stats-title">
+      <h2 class="section-title" id="stats-title">数据统计看板</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">总记录数</div>
+          <div class="stat-value" id="stat-total">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">生产中</div>
+          <div class="stat-value" id="stat-production">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">已封样</div>
+          <div class="stat-value" id="stat-sealed">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">已通过</div>
+          <div class="stat-value" id="stat-passed">0</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 工具栏：搜索筛选 + 导出 -->
+    <section class="section" id="toolbar-section">
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <input
+            type="text"
+            id="search-input"
+            class="search-input"
+            placeholder="搜索材料名称、工厂、批次、封样编号"
+          />
+          <select id="filter-production-status" class="filter-select">
+            <option value="">全部生产状态</option>
+            <option value="生产中">生产中</option>
+            <option value="已封样待确认">已封样待确认</option>
+            <option value="已通过">已通过</option>
+            <option value="已驳回">已驳回</option>
+          </select>
+          <select id="filter-seal-status" class="filter-select">
+            <option value="">全部封样状态</option>
+            <option value="未封样">未封样</option>
+            <option value="已封样">已封样</option>
+            <option value="封样确认中">封样确认中</option>
+          </select>
+        </div>
+        <div class="toolbar-group admin-only">
+          <button type="button" class="btn btn-secondary btn-icon" id="btn-export">📥 导出 Excel</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 登记表单 -->
+    <section class="section admin-only" aria-labelledby="form-title" id="form-section">
+      <h2 class="section-title" id="form-title">品控记录登记</h2>
+      <div class="card">
+        <form id="qc-form" novalidate>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="production-status" class="form-label required">生产状态</label>
+              <select id="production-status" name="productionStatus" class="form-select" required>
+                <option value="">请选择生产状态</option>
+                <option value="生产中">生产中</option>
+                <option value="已封样待确认">已封样待确认</option>
+                <option value="已通过">已通过</option>
+                <option value="已驳回">已驳回</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="seal-status" class="form-label">封样状态</label>
+              <select id="seal-status" name="sealStatus" class="form-select">
+                <option value="未封样">未封样</option>
+                <option value="已封样">已封样</option>
+                <option value="封样确认中">封样确认中</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="factory-name" class="form-label required">工厂名称</label>
+              <input type="text" id="factory-name" name="factoryName" class="form-control" placeholder="请输入工厂名称" required />
+            </div>
+
+            <div class="form-group">
+              <label for="seal-code" class="form-label">封样编号</label>
+              <input type="text" id="seal-code" name="sealCode" class="form-control" placeholder="例：FY-2026-001" />
+            </div>
+
+            <div class="form-group">
+              <label for="material-name" class="form-label required">材料名称</label>
+              <input type="text" id="material-name" name="materialName" class="form-control" placeholder="请输入材料名称" required />
+            </div>
+
+            <div class="form-group">
+              <label for="material-batch" class="form-label required">材料批次</label>
+              <input type="text" id="material-batch" name="materialBatch" class="form-control" placeholder="请输入材料批次" required />
+            </div>
+
+            <div class="form-group">
+              <label for="material-params" class="form-label">材料参数</label>
+              <input type="text" id="material-params" name="materialParams" class="form-control" placeholder="密度、强度等指标" />
+            </div>
+
+            <div class="form-group">
+              <label for="material-effect" class="form-label">材料效果</label>
+              <input type="text" id="material-effect" name="materialEffect" class="form-control" placeholder="实际打样效果描述" />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="remarks" class="form-label">备注</label>
+              <textarea id="remarks" name="remarks" class="form-textarea" placeholder="补充说明"></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">提交登记</button>
+            <button type="button" class="btn btn-secondary" id="btn-reset">清空</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- 记录列表 -->
+    <section class="section" aria-labelledby="list-title">
+      <div class="section-header">
+        <h2 class="section-title" id="list-title">品控记录列表</h2>
+        <button type="button" class="btn btn-secondary btn-icon admin-only" id="btn-field-settings">⚙️ 调整字段</button>
+      </div>
+      <div id="records-list" class="records-grid" aria-live="polite">
+        <!-- 动态渲染 -->
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer-slogan">
+    <strong>善待你一生</strong> · LONGFOR 龙湖
+  </footer>
+
+  <!-- Toast 容器 -->
+  <div class="toast-container" id="toast-container" aria-live="assertive"></div>
+
+  <!-- 删除确认弹窗 -->
+  <div class="modal-overlay" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-title" id="modal-title">确认删除</div>
+      <div class="modal-body">
+        确定要删除该条品控记录吗？删除后将无法恢复。
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-delete">取消</button>
+        <button type="button" class="btn btn-danger btn-sm" id="btn-confirm-delete">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 字段设置弹窗 -->
+  <div class="modal-overlay" id="field-settings-modal" role="dialog" aria-modal="true" aria-labelledby="field-settings-title">
+    <div class="modal">
+      <div class="modal-title" id="field-settings-title">调整显示字段</div>
+      <div class="modal-body">
+        勾选需要在记录卡片中显示的字段：
+      </div>
+      <div class="field-settings-grid" id="field-settings-grid">
+        <!-- 动态渲染 -->
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-field-settings">取消</button>
+        <button type="button" class="btn btn-primary btn-sm" id="btn-save-field-settings">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const STORAGE_KEY_RECORDS = "longfor_oem_qc_records";
+      const STORAGE_KEY_USER = "longfor_oem_qc_user";
+      const STORAGE_KEY_FIELD_PREFS = "longfor_oem_qc_field_prefs";
+
+      const ACCOUNTS = [
+        { username: "admin", password: "longfor2026", role: "admin" },
+        { username: "operator", password: "longfor2026", role: "operator" }
+      ];
+
+      const FIELD_DEFS = [
+        { key: "materialName", label: "材料名称", defaultVisible: true },
+        { key: "productionStatus", label: "生产状态", defaultVisible: true },
+        { key: "factoryName", label: "工厂名称", defaultVisible: true },
+        { key: "materialBatch", label: "材料批次", defaultVisible: true },
+        { key: "sealCode", label: "封样编号", defaultVisible: true },
+        { key: "sealStatus", label: "封样状态", defaultVisible: true },
+        { key: "createdAt", label: "创建时间", defaultVisible: true },
+        { key: "materialParams", label: "材料参数", defaultVisible: false },
+        { key: "materialEffect", label: "材料效果", defaultVisible: false },
+        { key: "remarks", label: "备注", defaultVisible: false }
+      ];
+
+      const productionStatusMap = {
+        "生产中": { class: "status-production", label: "生产中" },
+        "已封样待确认": { class: "status-pending", label: "已封样待确认" },
+        "已通过": { class: "status-passed", label: "已通过" },
+        "已驳回": { class: "status-rejected", label: "已驳回" }
+      };
+
+      // DOM refs
+      const loginScreen = document.getElementById("login-screen");
+      const loginForm = document.getElementById("login-form");
+      const loginUsername = document.getElementById("login-username");
+      const loginPassword = document.getElementById("login-password");
+      const loginError = document.getElementById("login-error");
+      const mainHeader = document.getElementById("main-header");
+      const mainContainer = document.getElementById("main-container");
+      const userRole = document.getElementById("user-role");
+      const btnLogout = document.getElementById("btn-logout");
+      const form = document.getElementById("qc-form");
+      const recordsList = document.getElementById("records-list");
+      const toastContainer = document.getElementById("toast-container");
+      const confirmModal = document.getElementById("confirm-modal");
+      const fieldSettingsModal = document.getElementById("field-settings-modal");
+      const fieldSettingsGrid = document.getElementById("field-settings-grid");
+      const btnReset = document.getElementById("btn-reset");
+      const btnCancelDelete = document.getElementById("btn-cancel-delete");
+      const btnConfirmDelete = document.getElementById("btn-confirm-delete");
+      const btnExport = document.getElementById("btn-export");
+      const btnFieldSettings = document.getElementById("btn-field-settings");
+      const btnCancelFieldSettings = document.getElementById("btn-cancel-field-settings");
+      const btnSaveFieldSettings = document.getElementById("btn-save-field-settings");
+      const searchInput = document.getElementById("search-input");
+      const filterProductionStatus = document.getElementById("filter-production-status");
+      const filterSealStatus = document.getElementById("filter-seal-status");
+
+      let pendingDeleteId = null;
+
+      const filters = {
+        keyword: "",
+        productionStatus: "",
+        sealStatus: ""
+      };
+
+      function generateId() {
+        return "rec_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+      }
+
+      function formatDate(ts) {
+        const d = new Date(ts);
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      }
+
+      function escapeHtml(str) {
+        if (str == null) return "";
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function escapeXml(str) {
+        if (str == null) return "";
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&apos;");
+      }
+
+      // Storage helpers
+      function loadRecords() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY_RECORDS);
+          return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+          console.error("读取 localStorage 失败", e);
+          return [];
+        }
+      }
+
+      function saveRecords(records) {
+        try {
+          localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(records));
+        } catch (e) {
+          console.error("写入 localStorage 失败", e);
+          showToast("数据保存失败，请检查浏览器存储权限", "error");
+        }
+      }
+
+      function getCurrentUser() {
+        try {
+          const raw = sessionStorage.getItem(STORAGE_KEY_USER);
+          return raw ? JSON.parse(raw) : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function setCurrentUser(user) {
+        try {
+          sessionStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+        } catch (e) {
+          console.error("写入 sessionStorage 失败", e);
+        }
+      }
+
+      function clearCurrentUser() {
+        sessionStorage.removeItem(STORAGE_KEY_USER);
+      }
+
+      function getCurrentRole() {
+        const user = getCurrentUser();
+        return user ? user.role : null;
+      }
+
+      function isAdmin() {
+        return getCurrentRole() === "operator";
+      }
+
+      function isUploader() {
+        return getCurrentRole() === "admin";
+      }
+
+      function loadFieldPrefs() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY_FIELD_PREFS);
+          if (raw) return JSON.parse(raw);
+        } catch (e) {
+          console.error("读取字段偏好失败", e);
+        }
+        return getDefaultFieldPrefs();
+      }
+
+      function saveFieldPrefs(prefs) {
+        try {
+          localStorage.setItem(STORAGE_KEY_FIELD_PREFS, JSON.stringify(prefs));
+        } catch (e) {
+          console.error("保存字段偏好失败", e);
+        }
+      }
+
+      function getDefaultFieldPrefs() {
+        const prefs = {};
+        FIELD_DEFS.forEach((f) => {
+          prefs[f.key] = f.defaultVisible;
+        });
+        return prefs;
+      }
+
+      function isFieldVisible(key) {
+        const prefs = loadFieldPrefs();
+        return prefs[key] !== false;
+      }
+
+      // Auth
+      function login(username, password) {
+        const account = ACCOUNTS.find(
+          (a) => a.username === username && a.password === password
+        );
+        if (!account) {
+          return { success: false, message: "用户名或密码错误" };
+        }
+        setCurrentUser({
+          role: account.role,
+          username: account.username,
+          loginAt: Date.now()
+        });
+        return { success: true, role: account.role };
+      }
+
+      function logout() {
+        clearCurrentUser();
+        showLoginScreen();
+        showToast("已退出登录", "success");
+      }
+
+      function showLoginScreen() {
+        loginScreen.classList.remove("hidden");
+        mainHeader.classList.add("hidden");
+        mainContainer.classList.add("hidden");
+        loginForm.reset();
+        loginUsername.focus();
+        loginError.textContent = "";
+      }
+
+      function showMainApp() {
+        loginScreen.classList.add("hidden");
+        mainHeader.classList.remove("hidden");
+        mainContainer.classList.remove("hidden");
+      }
+
+      function applyRoleUI() {
+        const role = getCurrentRole();
+        const roleText = role === "admin" ? "操作员" : role === "operator" ? "管理员" : "未登录";
+        userRole.textContent = roleText;
+
+        // 操作员：负责登记/上传数据（表单、导出、调整字段、删除自己的记录）
+        // 管理员：负责查看数据（列表、统计、搜索筛选、导出）
+        const isUploader = role === "admin";
+        const isViewer = role === "operator";
+
+        document.querySelectorAll(".admin-only").forEach((el) => {
+          // 默认隐藏，操作员可见
+          el.classList.toggle("hidden", !isUploader);
+        });
+
+        // 管理员（查看者）也能看到导出按钮和工具栏
+        document.querySelectorAll("#toolbar-section").forEach((el) => {
+          el.classList.remove("hidden");
+        });
+      }
+
+      function initAuth() {
+        const user = getCurrentUser();
+        if (user) {
+          showMainApp();
+          applyRoleUI();
+          renderRecords();
+        } else {
+          showLoginScreen();
+        }
+      }
+
+      // Filters
+      function filterRecords(records) {
+        const keyword = filters.keyword.trim().toLowerCase();
+        return records.filter((r) => {
+          if (filters.productionStatus && r.productionStatus !== filters.productionStatus) return false;
+          if (filters.sealStatus && r.sealStatus !== filters.sealStatus) return false;
+          if (keyword) {
+            const haystack = [
+              r.materialName,
+              r.factoryName,
+              r.materialBatch,
+              r.sealCode
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
+            if (!haystack.includes(keyword)) return false;
+          }
+          return true;
+        });
+      }
+
+      function debounce(fn, ms) {
+        let timer = null;
+        return function (...args) {
+          clearTimeout(timer);
+          timer = setTimeout(() => fn.apply(this, args), ms);
+        };
+      }
+
+      function applyFilters() {
+        const records = loadRecords().sort((a, b) => b.createdAt - a.createdAt);
+        const filtered = filterRecords(records);
+        renderStats(filtered);
+        renderList(filtered);
+      }
+
+      // Rendering
+      function renderStats(records) {
+        const total = records.length;
+        const production = records.filter((r) => r.productionStatus === "生产中").length;
+        const sealed = records.filter((r) => r.sealStatus === "已封样").length;
+        const passed = records.filter((r) => r.productionStatus === "已通过").length;
+
+        document.getElementById("stat-total").textContent = total;
+        document.getElementById("stat-production").textContent = production;
+        document.getElementById("stat-sealed").textContent = sealed;
+        document.getElementById("stat-passed").textContent = passed;
+      }
+
+      function renderList(records) {
+        recordsList.innerHTML = "";
+
+        if (records.length === 0) {
+          recordsList.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">📋</div>
+              <div>暂无符合条件的品控记录</div>
+            </div>
+          `;
+          return;
+        }
+
+        const prefs = loadFieldPrefs();
+
+        records.forEach((record) => {
+          const status = productionStatusMap[record.productionStatus] || { class: "", label: record.productionStatus };
+          const card = document.createElement("div");
+          card.className = "record-card";
+
+          // Header always shows material name + status if visible
+          let headerHtml = "";
+          if (isFieldVisible("materialName")) {
+            headerHtml += `<div class="record-title">${escapeHtml(record.materialName)}</div>`;
+          }
+          if (isFieldVisible("productionStatus")) {
+            headerHtml += `<span class="status-tag ${status.class}">${escapeHtml(status.label)}</span>`;
+          }
+
+          // Info rows
+          const infoRows = [];
+          const addRow = (key, label, value, alwaysShow = false) => {
+            if (!isFieldVisible(key) && !alwaysShow) return;
+            if (!alwaysShow && (!value || value === "")) return;
+            infoRows.push(`
+              <div class="record-info-row">
+                <span class="record-info-label">${escapeHtml(label)}：</span>
+                <span>${escapeHtml(key === "createdAt" ? formatDate(value) : value)}</span>
+              </div>
+            `);
+          };
+
+          addRow("factoryName", "工厂", record.factoryName);
+          addRow("materialBatch", "材料批次", record.materialBatch);
+          addRow("sealCode", "封样编号", record.sealCode);
+          addRow("sealStatus", "封样状态", record.sealStatus);
+          addRow("materialParams", "材料参数", record.materialParams);
+          addRow("materialEffect", "材料效果", record.materialEffect);
+          addRow("remarks", "备注", record.remarks);
+          addRow("createdAt", "创建时间", record.createdAt);
+
+          const deleteBtnHtml = isUploader()
+            ? `<button type="button" class="btn btn-danger btn-sm" data-id="${record.id}" aria-label="删除记录">🗑️ 删除</button>`
+            : "";
+
+          card.innerHTML = `
+            <div class="record-header">
+              ${headerHtml || `<div class="record-title">品控记录</div>`}
+            </div>
+            <div class="record-info">
+              ${infoRows.join("")}
+            </div>
+            <div class="record-footer">
+              <div class="record-time">${formatDate(record.createdAt)}</div>
+              ${deleteBtnHtml}
+            </div>
+          `;
+          recordsList.appendChild(card);
+        });
+
+        // 绑定删除按钮事件
+        recordsList.querySelectorAll("button[data-id]").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            pendingDeleteId = e.currentTarget.dataset.id;
+            openModal(confirmModal);
+          });
+        });
+      }
+
+      function renderRecords() {
+        const records = loadRecords().sort((a, b) => b.createdAt - a.createdAt);
+        const filtered = filterRecords(records);
+        renderStats(filtered);
+        renderList(filtered);
+      }
+
+      // Form
+      function validateForm() {
+        const requiredIds = ["production-status", "factory-name", "material-name", "material-batch"];
+        let firstInvalid = null;
+        let valid = true;
+
+        requiredIds.forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el.value.trim()) {
+            valid = false;
+            el.style.borderColor = "var(--error)";
+            if (!firstInvalid) firstInvalid = el;
+          } else {
+            el.style.borderColor = "";
+          }
+        });
+
+        if (firstInvalid) {
+          firstInvalid.focus();
+        }
+
+        return valid;
+      }
+
+      function clearValidationStyles() {
+        form.querySelectorAll(".form-control, .form-select, .form-textarea").forEach((el) => {
+          el.style.borderColor = "";
+        });
+      }
+
+      function resetForm() {
+        form.reset();
+        clearValidationStyles();
+        document.getElementById("production-status").focus();
+      }
+
+      function handleSubmit(e) {
+        e.preventDefault();
+        clearValidationStyles();
+
+        if (!validateForm()) {
+          showToast("请填写所有必填项", "error");
+          return;
+        }
+
+        const formData = new FormData(form);
+        const newRecord = {
+          id: generateId(),
+          productionStatus: formData.get("productionStatus").trim(),
+          sealStatus: formData.get("sealStatus").trim() || "未封样",
+          factoryName: formData.get("factoryName").trim(),
+          sealCode: formData.get("sealCode").trim(),
+          materialName: formData.get("materialName").trim(),
+          materialBatch: formData.get("materialBatch").trim(),
+          materialParams: formData.get("materialParams").trim(),
+          materialEffect: formData.get("materialEffect").trim(),
+          remarks: formData.get("remarks").trim(),
+          createdAt: Date.now()
+        };
+
+        const records = loadRecords();
+        records.push(newRecord);
+        saveRecords(records);
+        renderRecords();
+        resetForm();
+        showToast("登记成功", "success");
+      }
+
+      function deleteRecord(id) {
+        const records = loadRecords().filter((r) => r.id !== id);
+        saveRecords(records);
+        renderRecords();
+        showToast("删除成功", "success");
+      }
+
+      // Modals
+      function openModal(modalEl) {
+        modalEl.classList.add("show");
+      }
+
+      function closeModal(modalEl) {
+        modalEl.classList.remove("show");
+      }
+
+      // Toast
+      function showToast(message, type) {
+        const toast = document.createElement("div");
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        toastContainer.appendChild(toast);
+
+        requestAnimationFrame(() => {
+          toast.classList.add("show");
+        });
+
+        setTimeout(() => {
+          toast.classList.remove("show");
+          toast.addEventListener("transitionend", () => {
+            toast.remove();
+          });
+        }, 2500);
+      }
+
+      // Export Excel (SpreadsheetML)
+      function generateSpreadsheetML(records) {
+        const headers = FIELD_DEFS.map((f) => f.label);
+        const keys = FIELD_DEFS.map((f) => f.key);
+
+        const headerRow = keys
+          .map((_, idx) => `<Cell ss:StyleID="Header"><Data ss:Type="String">${escapeXml(headers[idx])}</Data></Cell>`)
+          .join("");
+
+        const dataRows = records
+          .map((r) => {
+            return `<Row>${keys
+              .map((key) => {
+                let value = r[key];
+                let type = "String";
+                if (key === "createdAt") {
+                  value = formatDate(value);
+                }
+                return `<Cell><Data ss:Type="${type}">${escapeXml(value)}</Data></Cell>`;
+              })
+              .join("")}</Row>`;
+          })
+          .join("");
+
+        const columns = keys.map(() => `<Column ss:Width="120" />`).join("");
+
+        return `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:x="urn:schemas-microsoft-com:office:excel"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Styles>
+    <Style ss:ID="Header">
+      <Interior ss:Color="#003894" ss:Pattern="Solid"/>
+      <Font ss:Color="#FFFFFF" ss:Bold="1"/>
+      <Alignment ss:Horizontal="Center"/>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="品控记录">
+    <Table>
+      ${columns}
+      <Row>${headerRow}</Row>
+      ${dataRows}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+      }
+
+      function downloadFile(content, filename, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      function exportToExcel() {
+        const records = filterRecords(loadRecords().sort((a, b) => b.createdAt - a.createdAt));
+        if (records.length === 0) {
+          showToast("没有可导出的记录", "error");
+          return;
+        }
+        const xml = generateSpreadsheetML(records);
+        const dateStr = new Date().toISOString().slice(0, 10);
+        downloadFile(xml, `品控记录_${dateStr}.xls`, "application/vnd.ms-excel");
+        showToast("导出成功", "success");
+      }
+
+      // Field settings
+      function renderFieldSettingsModal() {
+        const prefs = loadFieldPrefs();
+        fieldSettingsGrid.innerHTML = "";
+        FIELD_DEFS.forEach((f) => {
+          const label = document.createElement("label");
+          label.className = "field-option";
+          label.innerHTML = `
+            <input type="checkbox" value="${f.key}" ${prefs[f.key] ? "checked" : ""} />
+            <span>${escapeHtml(f.label)}</span>
+          `;
+          fieldSettingsGrid.appendChild(label);
+        });
+      }
+
+      function saveFieldSettings() {
+        const prefs = {};
+        fieldSettingsGrid.querySelectorAll("input[type='checkbox']").forEach((cb) => {
+          prefs[cb.value] = cb.checked;
+        });
+        saveFieldPrefs(prefs);
+        renderRecords();
+        closeModal(fieldSettingsModal);
+        showToast("字段设置已保存", "success");
+      }
+
+      // Event bindings
+      loginForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const username = loginUsername.value.trim();
+        const password = loginPassword.value;
+        const result = login(username, password);
+        if (result.success) {
+          showMainApp();
+          applyRoleUI();
+          renderRecords();
+          const displayName = result.role === "admin" ? "操作员" : "管理员";
+          showToast(`欢迎，${displayName}`, "success");
+        } else {
+          loginError.textContent = result.message;
+          loginPassword.value = "";
+          loginPassword.focus();
+        }
+      });
+
+      btnLogout.addEventListener("click", logout);
+
+      form.addEventListener("submit", handleSubmit);
+
+      btnReset.addEventListener("click", () => {
+        resetForm();
+        showToast("表单已清空", "success");
+      });
+
+      btnCancelDelete.addEventListener("click", () => {
+        closeModal(confirmModal);
+        pendingDeleteId = null;
+      });
+
+      btnConfirmDelete.addEventListener("click", () => {
+        if (pendingDeleteId) {
+          deleteRecord(pendingDeleteId);
+        }
+        closeModal(confirmModal);
+        pendingDeleteId = null;
+      });
+
+      confirmModal.addEventListener("click", (e) => {
+        if (e.target === confirmModal) closeModal(confirmModal);
+      });
+
+      btnExport.addEventListener("click", exportToExcel);
+
+      btnFieldSettings.addEventListener("click", () => {
+        renderFieldSettingsModal();
+        openModal(fieldSettingsModal);
+      });
+
+      btnCancelFieldSettings.addEventListener("click", () => {
+        closeModal(fieldSettingsModal);
+      });
+
+      btnSaveFieldSettings.addEventListener("click", saveFieldSettings);
+
+      fieldSettingsModal.addEventListener("click", (e) => {
+        if (e.target === fieldSettingsModal) closeModal(fieldSettingsModal);
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          if (confirmModal.classList.contains("show")) closeModal(confirmModal);
+          if (fieldSettingsModal.classList.contains("show")) closeModal(fieldSettingsModal);
+        }
+      });
+
+      // Filters events
+      searchInput.addEventListener(
+        "input",
+        debounce((e) => {
+          filters.keyword = e.target.value;
+          applyFilters();
+        }, 250)
+      );
+
+      filterProductionStatus.addEventListener("change", (e) => {
+        filters.productionStatus = e.target.value;
+        applyFilters();
+      });
+
+      filterSealStatus.addEventListener("change", (e) => {
+        filters.sealStatus = e.target.value;
+        applyFilters();
+      });
+
+      // Init
+      initAuth();
+    })();
+  </script>
+</body>
+</html>
