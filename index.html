@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>龙湖 OEM 品控云台</title>
+  <script src="https://imgcache.qq.com/qcloud/cloudbase-js-sdk/1.7.1/cloudbase.full.js"></script>
   <style>
     :root {
       --primary-dark: #003894;
@@ -84,15 +85,6 @@
       color: rgba(255, 255, 255, 0.85);
       letter-spacing: 2px;
       margin-top: 2px;
-    }
-
-    .header-inner {
-      max-width: 1280px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
     }
 
     .header-left {
@@ -1127,7 +1119,10 @@
     (function () {
       "use strict";
 
-      const STORAGE_KEY_RECORDS = "longfor_oem_qc_records";
+      // 腾讯云 CloudBase 配置
+      const TCB_ENV_ID = "oem-yuntai-d1g5rchqk663c8eba";
+      const TCB_COLLECTION = "qc_records";
+
       const STORAGE_KEY_USER = "longfor_oem_qc_user";
       const STORAGE_KEY_FIELD_PREFS = "longfor_oem_qc_field_prefs";
 
@@ -1184,6 +1179,8 @@
       const filterSealStatus = document.getElementById("filter-seal-status");
 
       let pendingDeleteId = null;
+      let db = null;
+      let tcbApp = null;
 
       const filters = {
         keyword: "",
@@ -1221,26 +1218,22 @@
           .replace(/'/g, "&apos;");
       }
 
+      // 初始化 CloudBase
+      async function initCloudBase() {
+        try {
+          tcbApp = cloudbase.init({ env: TCB_ENV_ID });
+          await tcbApp.auth({ persistence: "local" }).anonymousAuthProvider().signIn();
+          db = tcbApp.database();
+          console.log("CloudBase 初始化成功");
+          return true;
+        } catch (e) {
+          console.error("CloudBase 初始化失败", e);
+          showToast("云服务连接失败，请检查网络或环境ID", "error");
+          return false;
+        }
+      }
+
       // Storage helpers
-      function loadRecords() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY_RECORDS);
-          return raw ? JSON.parse(raw) : [];
-        } catch (e) {
-          console.error("读取 localStorage 失败", e);
-          return [];
-        }
-      }
-
-      function saveRecords(records) {
-        try {
-          localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(records));
-        } catch (e) {
-          console.error("写入 localStorage 失败", e);
-          showToast("数据保存失败，请检查浏览器存储权限", "error");
-        }
-      }
-
       function getCurrentUser() {
         try {
           const raw = sessionStorage.getItem(STORAGE_KEY_USER);
@@ -1265,10 +1258,6 @@
       function getCurrentRole() {
         const user = getCurrentUser();
         return user ? user.role : null;
-      }
-
-      function isAdmin() {
-        return getCurrentRole() === "operator";
       }
 
       function isUploader() {
@@ -1350,12 +1339,10 @@
 
         // 操作员：负责登记/上传数据（表单、导出、调整字段、删除自己的记录）
         // 管理员：负责查看数据（列表、统计、搜索筛选、导出）
-        const isUploader = role === "admin";
-        const isViewer = role === "operator";
+        const uploader = isUploader();
 
         document.querySelectorAll(".admin-only").forEach((el) => {
-          // 默认隐藏，操作员可见
-          el.classList.toggle("hidden", !isUploader);
+          el.classList.toggle("hidden", !uploader);
         });
 
         // 管理员（查看者）也能看到导出按钮和工具栏
@@ -1364,14 +1351,56 @@
         });
       }
 
-      function initAuth() {
+      async function initAuth() {
         const user = getCurrentUser();
         if (user) {
+          const cbReady = await initCloudBase();
+          if (!cbReady) return;
           showMainApp();
           applyRoleUI();
-          renderRecords();
+          await renderRecords();
         } else {
           showLoginScreen();
+        }
+      }
+
+      // CloudBase data operations
+      async function loadRecordsFromCloud() {
+        if (!db) return [];
+        try {
+          const res = await db.collection(TCB_COLLECTION)
+            .limit(1000)
+            .orderBy("createdAt", "desc")
+            .get();
+          return res.data || [];
+        } catch (e) {
+          console.error("读取云端数据失败", e);
+          showToast("读取数据失败，请检查网络", "error");
+          return [];
+        }
+      }
+
+      async function saveRecordToCloud(record) {
+        if (!db) return false;
+        try {
+          await db.collection(TCB_COLLECTION).add(record);
+          return true;
+        } catch (e) {
+          console.error("保存云端数据失败", e);
+          showToast("保存失败，请检查网络或数据库权限", "error");
+          return false;
+        }
+      }
+
+      async function deleteRecordFromCloud(id) {
+        if (!db) return false;
+        try {
+          await db.collection(TCB_COLLECTION).doc(id).remove();
+          return true;
+        } catch (e) {
+          console.error("删除云端数据失败", e);
+          showToast("删除失败，请检查网络", "error");
+          return false;
         }
       }
 
@@ -1405,8 +1434,8 @@
         };
       }
 
-      function applyFilters() {
-        const records = loadRecords().sort((a, b) => b.createdAt - a.createdAt);
+      async function applyFilters() {
+        const records = await loadRecordsFromCloud();
         const filtered = filterRecords(records);
         renderStats(filtered);
         renderList(filtered);
@@ -1438,14 +1467,11 @@
           return;
         }
 
-        const prefs = loadFieldPrefs();
-
         records.forEach((record) => {
           const status = productionStatusMap[record.productionStatus] || { class: "", label: record.productionStatus };
           const card = document.createElement("div");
           card.className = "record-card";
 
-          // Header always shows material name + status if visible
           let headerHtml = "";
           if (isFieldVisible("materialName")) {
             headerHtml += `<div class="record-title">${escapeHtml(record.materialName)}</div>`;
@@ -1454,7 +1480,6 @@
             headerHtml += `<span class="status-tag ${status.class}">${escapeHtml(status.label)}</span>`;
           }
 
-          // Info rows
           const infoRows = [];
           const addRow = (key, label, value, alwaysShow = false) => {
             if (!isFieldVisible(key) && !alwaysShow) return;
@@ -1495,7 +1520,6 @@
           recordsList.appendChild(card);
         });
 
-        // 绑定删除按钮事件
         recordsList.querySelectorAll("button[data-id]").forEach((btn) => {
           btn.addEventListener("click", (e) => {
             pendingDeleteId = e.currentTarget.dataset.id;
@@ -1504,8 +1528,8 @@
         });
       }
 
-      function renderRecords() {
-        const records = loadRecords().sort((a, b) => b.createdAt - a.createdAt);
+      async function renderRecords() {
+        const records = await loadRecordsFromCloud();
         const filtered = filterRecords(records);
         renderStats(filtered);
         renderList(filtered);
@@ -1547,7 +1571,7 @@
         document.getElementById("production-status").focus();
       }
 
-      function handleSubmit(e) {
+      async function handleSubmit(e) {
         e.preventDefault();
         clearValidationStyles();
 
@@ -1571,18 +1595,17 @@
           createdAt: Date.now()
         };
 
-        const records = loadRecords();
-        records.push(newRecord);
-        saveRecords(records);
-        renderRecords();
+        const saved = await saveRecordToCloud(newRecord);
+        if (!saved) return;
+        await renderRecords();
         resetForm();
         showToast("登记成功", "success");
       }
 
-      function deleteRecord(id) {
-        const records = loadRecords().filter((r) => r.id !== id);
-        saveRecords(records);
-        renderRecords();
+      async function deleteRecord(id) {
+        const removed = await deleteRecordFromCloud(id);
+        if (!removed) return;
+        await renderRecords();
         showToast("删除成功", "success");
       }
 
@@ -1675,8 +1698,8 @@
         URL.revokeObjectURL(url);
       }
 
-      function exportToExcel() {
-        const records = filterRecords(loadRecords().sort((a, b) => b.createdAt - a.createdAt));
+      async function exportToExcel() {
+        const records = filterRecords(await loadRecordsFromCloud());
         if (records.length === 0) {
           showToast("没有可导出的记录", "error");
           return;
@@ -1714,15 +1737,20 @@
       }
 
       // Event bindings
-      loginForm.addEventListener("submit", (e) => {
+      loginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const username = loginUsername.value.trim();
         const password = loginPassword.value;
         const result = login(username, password);
         if (result.success) {
+          const cbReady = await initCloudBase();
+          if (!cbReady) {
+            loginError.textContent = "云服务连接失败，请稍后重试";
+            return;
+          }
           showMainApp();
           applyRoleUI();
-          renderRecords();
+          await renderRecords();
           const displayName = result.role === "admin" ? "操作员" : "管理员";
           showToast(`欢迎，${displayName}`, "success");
         } else {
@@ -1746,9 +1774,9 @@
         pendingDeleteId = null;
       });
 
-      btnConfirmDelete.addEventListener("click", () => {
+      btnConfirmDelete.addEventListener("click", async () => {
         if (pendingDeleteId) {
-          deleteRecord(pendingDeleteId);
+          await deleteRecord(pendingDeleteId);
         }
         closeModal(confirmModal);
         pendingDeleteId = null;
