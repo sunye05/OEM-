@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>龙湖 OEM 品控云台</title>
-  <script src="https://imgcache.qq.com/qcloud/cloudbase-js-sdk/1.7.1/cloudbase.full.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
   <style>
     :root {
       --primary-dark: #003894;
@@ -1124,6 +1124,16 @@
       const TCB_COLLECTION = "qc_records";
 
       const STORAGE_KEY_USER = "longfor_oem_qc_user";
+      // 腾讯云 CloudBase 配置（已废弃，保留注释避免空引用）
+      const TCB_ENV_ID = "oem-yuntai-d1g5rchqk663c8eba";
+      const TCB_COLLECTION = "qc_records";
+
+      // Supabase 配置
+      const SUPABASE_URL = "https://pwojiqrdsoezglwvyxyp.supabase.co";
+      const SUPABASE_KEY = "sb_publishable_zZ6nQJ-2YAMjZXBlVe9dcQ_tejgN1Ce";
+      const SUPABASE_TABLE = "qc_records";
+
+      const STORAGE_KEY_USER = "longfor_oem_qc_user";
       const STORAGE_KEY_FIELD_PREFS = "longfor_oem_qc_field_prefs";
 
       const ACCOUNTS = [
@@ -1143,6 +1153,21 @@
         { key: "materialEffect", label: "材料效果", defaultVisible: false },
         { key: "remarks", label: "备注", defaultVisible: false }
       ];
+
+      // Supabase 数据库字段与前端字段的映射
+      const DB_FIELD_MAP = {
+        id: "id",
+        production_status: "productionStatus",
+        seal_status: "sealStatus",
+        factory_name: "factoryName",
+        seal_code: "sealCode",
+        material_name: "materialName",
+        material_batch: "materialBatch",
+        material_params: "materialParams",
+        material_effect: "materialEffect",
+        remarks: "remarks",
+        created_at: "createdAt"
+      };
 
       const productionStatusMap = {
         "生产中": { class: "status-production", label: "生产中" },
@@ -1179,8 +1204,7 @@
       const filterSealStatus = document.getElementById("filter-seal-status");
 
       let pendingDeleteId = null;
-      let db = null;
-      let tcbApp = null;
+      let supabaseClient = null;
 
       const filters = {
         keyword: "",
@@ -1218,19 +1242,39 @@
           .replace(/'/g, "&apos;");
       }
 
-      // 初始化 CloudBase
-      async function initCloudBase() {
+      // 初始化 Supabase
+      function initSupabase() {
         try {
-          tcbApp = cloudbase.init({ env: TCB_ENV_ID });
-          await tcbApp.auth({ persistence: "local" }).anonymousAuthProvider().signIn();
-          db = tcbApp.database();
-          console.log("CloudBase 初始化成功");
+          supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+          console.log("Supabase 初始化成功");
           return true;
         } catch (e) {
-          console.error("CloudBase 初始化失败", e);
-          showToast("云服务连接失败，请检查网络或环境ID", "error");
+          console.error("Supabase 初始化失败", e);
+          showToast("云服务连接失败，请检查网络或配置", "error");
           return false;
         }
+      }
+
+      // 把 Supabase 返回的 snake_case 数据转为前端 camelCase
+      function mapDbToRecord(dbRow) {
+        const record = {};
+        Object.keys(DB_FIELD_MAP).forEach((dbKey) => {
+          const appKey = DB_FIELD_MAP[dbKey];
+          record[appKey] = dbRow[dbKey] !== undefined ? dbRow[dbKey] : "";
+        });
+        return record;
+      }
+
+      // 把前端 camelCase 数据转为 Supabase snake_case
+      function mapRecordToDb(record) {
+        const dbRow = {};
+        Object.keys(DB_FIELD_MAP).forEach((dbKey) => {
+          const appKey = DB_FIELD_MAP[dbKey];
+          if (record[appKey] !== undefined) {
+            dbRow[dbKey] = record[appKey];
+          }
+        });
+        return dbRow;
       }
 
       // Storage helpers
@@ -1354,8 +1398,8 @@
       async function initAuth() {
         const user = getCurrentUser();
         if (user) {
-          const cbReady = await initCloudBase();
-          if (!cbReady) return;
+          const ready = initSupabase();
+          if (!ready) return;
           showMainApp();
           applyRoleUI();
           await renderRecords();
@@ -1364,15 +1408,17 @@
         }
       }
 
-      // CloudBase data operations
+      // Supabase data operations
       async function loadRecordsFromCloud() {
-        if (!db) return [];
+        if (!supabaseClient) return [];
         try {
-          const res = await db.collection(TCB_COLLECTION)
-            .limit(1000)
-            .orderBy("createdAt", "desc")
-            .get();
-          return res.data || [];
+          const { data, error } = await supabaseClient
+            .from(SUPABASE_TABLE)
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(1000);
+          if (error) throw error;
+          return (data || []).map(mapDbToRecord);
         } catch (e) {
           console.error("读取云端数据失败", e);
           showToast("读取数据失败，请检查网络", "error");
@@ -1381,9 +1427,11 @@
       }
 
       async function saveRecordToCloud(record) {
-        if (!db) return false;
+        if (!supabaseClient) return false;
         try {
-          await db.collection(TCB_COLLECTION).add(record);
+          const dbRow = mapRecordToDb(record);
+          const { error } = await supabaseClient.from(SUPABASE_TABLE).insert([dbRow]);
+          if (error) throw error;
           return true;
         } catch (e) {
           console.error("保存云端数据失败", e);
@@ -1393,9 +1441,10 @@
       }
 
       async function deleteRecordFromCloud(id) {
-        if (!db) return false;
+        if (!supabaseClient) return false;
         try {
-          await db.collection(TCB_COLLECTION).doc(id).remove();
+          const { error } = await supabaseClient.from(SUPABASE_TABLE).delete().eq("id", id);
+          if (error) throw error;
           return true;
         } catch (e) {
           console.error("删除云端数据失败", e);
@@ -1743,8 +1792,8 @@
         const password = loginPassword.value;
         const result = login(username, password);
         if (result.success) {
-          const cbReady = await initCloudBase();
-          if (!cbReady) {
+          const ready = initSupabase();
+          if (!ready) {
             loginError.textContent = "云服务连接失败，请稍后重试";
             return;
           }
