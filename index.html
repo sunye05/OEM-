@@ -637,6 +637,12 @@
       color: #4b5563;
     }
 
+    .approval-draft {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px dashed #f0ad4e;
+    }
+
     /* Record card collapse */
     .record-card.collapsed {
       padding: 12px 18px;
@@ -1259,6 +1265,7 @@
           </select>
           <select id="filter-approval-status" class="filter-select">
             <option value="">全部审批状态</option>
+            <option value="draft">草稿</option>
             <option value="pending">待审批</option>
             <option value="approved">已通过</option>
             <option value="rejected">已驳回</option>
@@ -1325,10 +1332,10 @@
             </div>
           </div>
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary" id="btn-submit">提交登记</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit">提交审批</button>
             <button type="button" class="btn btn-secondary" id="btn-save-draft">💾 暂存</button>
             <button type="button" class="btn btn-secondary" id="btn-reset">清空</button>
-            <button type="button" class="btn btn-secondary hidden" id="btn-cancel-edit">取消重新编辑</button>
+            <button type="button" class="btn btn-secondary hidden" id="btn-cancel-edit">取消编辑</button>
           </div>
         </form>
       </div>
@@ -1462,6 +1469,7 @@
       };
 
       const APPROVAL_STATUS = {
+        DRAFT: "draft",
         PENDING: "pending",
         APPROVED: "approved",
         REJECTED: "rejected",
@@ -1470,6 +1478,7 @@
       };
 
       const approvalStatusMap = {
+        draft: { class: "approval-draft", label: "草稿" },
         pending: { class: "approval-pending", label: "待审批" },
         approved: { class: "approval-approved", label: "已通过" },
         rejected: { class: "approval-rejected", label: "已驳回" },
@@ -1527,7 +1536,8 @@
       function shouldAutoCollapse(approvalStatus) {
         return approvalStatus === APPROVAL_STATUS.APPROVED ||
                approvalStatus === APPROVAL_STATUS.REJECTED ||
-               approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED;
+               approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED ||
+               approvalStatus === APPROVAL_STATUS.WITHDRAWN;
       }
 
       function getMyPendingCount(records) {
@@ -1537,6 +1547,15 @@
           return records.filter((r) => r.submittedBy === user.username && r.approvalStatus === APPROVAL_STATUS.PENDING).length;
         }
         return records.filter((r) => r.approvalStatus === APPROVAL_STATUS.PENDING).length;
+      }
+
+      function getMyDraftCount(records) {
+        const user = getCurrentUser();
+        if (!user) return 0;
+        if (isUploader()) {
+          return records.filter((r) => r.submittedBy === user.username && r.approvalStatus === APPROVAL_STATUS.DRAFT).length;
+        }
+        return 0;
       }
 
       function hasDraftContent() {
@@ -1727,7 +1746,7 @@
         try {
           const user = getCurrentUser();
           const dbRow = mapRecordToDb(record);
-          dbRow.approval_status = APPROVAL_STATUS.PENDING;
+          dbRow.approval_status = APPROVAL_STATUS.DRAFT;
           dbRow.submitted_by = (user && user.username) || "unknown";
           dbRow.submitted_at = Date.now();
           dbRow.updated_at = Date.now();
@@ -1739,6 +1758,13 @@
           showToast("保存失败", "error");
           return false;
         }
+      }
+
+      async function submitRecordToApproval(id) {
+        const ok = await updateRecordInCloud(id, { approvalStatus: APPROVAL_STATUS.PENDING });
+        if (!ok) return false;
+        await saveApprovalLog(id, "submit", "提交审批", null, null);
+        return true;
       }
 
       async function updateRecordInCloud(id, updates) {
@@ -1918,15 +1944,20 @@
           if (isOp && record.approvalStatus === APPROVAL_STATUS.PENDING) {
             actions.push('<button type="button" class="btn btn-primary btn-sm btn-approve" data-id="' + record.id + '">审批</button>');
           }
-          if (isAdmin && record.submittedBy === (user && user.username) && record.approvalStatus === APPROVAL_STATUS.PENDING) {
-            actions.push('<button type="button" class="btn btn-secondary btn-sm btn-withdraw" data-id="' + record.id + '">撤回审批</button>');
-            actions.push('<button type="button" class="btn btn-danger btn-sm btn-delete" data-id="' + record.id + '">删除</button>');
-          }
-          if (isAdmin && record.submittedBy === (user && user.username) && (record.approvalStatus === APPROVAL_STATUS.REJECTED || record.approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED || record.approvalStatus === APPROVAL_STATUS.WITHDRAWN)) {
-            actions.push('<button type="button" class="btn btn-warning btn-sm btn-reedit" data-id="' + record.id + '">重新编辑</button>');
-          }
-          if (isAdmin && record.submittedBy === (user && user.username) && (record.approvalStatus === APPROVAL_STATUS.APPROVED || record.approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED || record.approvalStatus === APPROVAL_STATUS.REJECTED)) {
-            actions.push('<button type="button" class="btn btn-secondary btn-sm btn-export-card" data-id="' + record.id + '">导出单据</button>');
+          if (isAdmin && record.submittedBy === (user && user.username)) {
+            if (record.approvalStatus === APPROVAL_STATUS.DRAFT) {
+              actions.push('<button type="button" class="btn btn-warning btn-sm btn-reedit" data-id="' + record.id + '">继续编辑</button>');
+              actions.push('<button type="button" class="btn btn-secondary btn-sm btn-submit" data-id="' + record.id + '">提交审批</button>');
+              actions.push('<button type="button" class="btn btn-danger btn-sm btn-delete" data-id="' + record.id + '">删除</button>');
+            } else if (record.approvalStatus === APPROVAL_STATUS.PENDING) {
+              actions.push('<button type="button" class="btn btn-secondary btn-sm btn-withdraw" data-id="' + record.id + '">撤回审批</button>');
+              actions.push('<button type="button" class="btn btn-danger btn-sm btn-delete" data-id="' + record.id + '">删除</button>');
+            } else if (record.approvalStatus === APPROVAL_STATUS.REJECTED || record.approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED || record.approvalStatus === APPROVAL_STATUS.WITHDRAWN) {
+              actions.push('<button type="button" class="btn btn-warning btn-sm btn-reedit" data-id="' + record.id + '">重新编辑</button>');
+            }
+            if (record.approvalStatus === APPROVAL_STATUS.APPROVED || record.approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED || record.approvalStatus === APPROVAL_STATUS.REJECTED) {
+              actions.push('<button type="button" class="btn btn-secondary btn-sm btn-export-card" data-id="' + record.id + '">导出单据</button>');
+            }
           }
 
           const titleHtml = isFieldVisible("materialName") ? '<div class="record-title">' + escapeHtml(record.materialName) + '</div>' : '<div class="record-title">品控记录</div>';
@@ -1934,9 +1965,10 @@
 
           card.innerHTML = '<div class="record-header">' + titleHtml + headerHtml + '</div>' + summaryHtml + '<div class="record-info">' + infoRows.join("") + '</div><div class="record-footer">' + timeHtml + '<div class="record-actions">' + actions.join("") + '</div></div>';
 
-          // 操作员自己的非已通过记录：点击卡片打开编辑
+          // 操作员自己的非已通过/未驳回记录：点击卡片打开编辑
           const canReedit = isAdmin && record.submittedBy === (user && user.username) &&
-            (record.approvalStatus === APPROVAL_STATUS.PENDING ||
+            (record.approvalStatus === APPROVAL_STATUS.DRAFT ||
+             record.approvalStatus === APPROVAL_STATUS.PENDING ||
              record.approvalStatus === APPROVAL_STATUS.REJECTED ||
              record.approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED ||
              record.approvalStatus === APPROVAL_STATUS.WITHDRAWN);
@@ -1963,6 +1995,14 @@
         }));
         document.querySelectorAll(".btn-export-card").forEach((btn) => btn.addEventListener("click", (e) => { e.stopPropagation(); exportSingleRecordCard(e.currentTarget.dataset.id); }));
         document.querySelectorAll(".btn-withdraw").forEach((btn) => btn.addEventListener("click", (e) => { e.stopPropagation(); withdrawRecord(e.currentTarget.dataset.id); }));
+        document.querySelectorAll(".btn-submit").forEach((btn) => btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const id = e.currentTarget.dataset.id;
+          const ok = await submitRecordToApproval(id);
+          if (!ok) return;
+          await renderRecords();
+          showToast("已提交审批", "success");
+        }));
         document.querySelectorAll(".record-card.card-clickable").forEach((card) => {
           card.addEventListener("click", (e) => {
             if (e.target.closest("button")) return;
@@ -2001,8 +2041,9 @@
         form.reset();
         clearValidationStyles();
         reeditRecordId = null;
-        btnSubmit.textContent = "提交登记";
+        btnSubmit.textContent = "提交审批";
         btnCancelEdit.classList.add("hidden");
+        clearDraft();
         document.getElementById("production-status").focus();
       }
       function fillFormFromRecord(record) {
@@ -2041,29 +2082,52 @@
         if (!validateForm()) { showToast("请填写所有必填项", "error"); return; }
         const data = readFormData();
         if (reeditRecordId) {
+          // 编辑现有记录 → 提交审批
           const success = await updateRecordInCloud(reeditRecordId, Object.assign({}, data, { approvalStatus: APPROVAL_STATUS.PENDING }));
           if (!success) return;
+          await saveApprovalLog(reeditRecordId, "submit", "提交审批", null, null);
           clearDraft();
           resetForm();
           await renderRecords();
-          showToast("重新提交成功，等待审批", "success");
+          showToast("已提交审批", "success");
         } else {
+          // 新建草稿并直接提交审批
           const newRecord = Object.assign({ id: generateId(), createdAt: Date.now() }, data);
           const saved = await saveRecordToCloud(newRecord);
           if (!saved) return;
+          const ok = await submitRecordToApproval(newRecord.id);
+          if (!ok) return;
           clearDraft();
           resetForm();
           await renderRecords();
-          showToast("登记成功，已提交审批", "success");
+          showToast("已提交审批", "success");
         }
       }
 
-      function handleSaveDraft() {
+      async function handleSaveDraft() {
         const data = readFormData();
         const hasContent = Object.values(data).some((v) => v && String(v).trim() !== "");
         if (!hasContent) { showToast("表单为空，无需暂存", "error"); return; }
-        if (saveDraft(data)) showToast("已暂存，可在重新打开页面时恢复", "success");
-        else showToast("暂存失败", "error");
+        if (reeditRecordId) {
+          // 编辑现有记录 → 保存为草稿
+          const ok = await updateRecordInCloud(reeditRecordId, Object.assign({}, data, { approvalStatus: APPROVAL_STATUS.DRAFT }));
+          if (!ok) { showToast("暂存失败", "error"); return; }
+          await saveApprovalLog(reeditRecordId, "save_draft", "保存为草稿", null, null);
+          clearDraft();
+          resetForm();
+          await renderRecords();
+          showToast("已保存为草稿", "success");
+        } else {
+          // 新建草稿
+          const newRecord = Object.assign({ id: generateId(), createdAt: Date.now() }, data);
+          const saved = await saveRecordToCloud(newRecord);
+          if (!saved) { showToast("暂存失败", "error"); return; }
+          await saveApprovalLog(newRecord.id, "save_draft", "保存为草稿", null, null);
+          clearDraft();
+          resetForm();
+          await renderRecords();
+          showToast("已暂存到列表，可在列表中继续编辑", "success");
+        }
       }
 
       async function openReEditMode(recordId) {
@@ -2072,11 +2136,17 @@
         if (!record) return;
         reeditRecordId = recordId;
         fillFormFromRecord(record);
-        btnSubmit.textContent = "重新提交";
-        btnCancelEdit.classList.remove("hidden");
         clearDraft();
+        // 根据当前状态决定按钮文字
+        if (record.approvalStatus === APPROVAL_STATUS.DRAFT) {
+          btnSubmit.textContent = "提交审批";
+          showToast("已加载草稿，可继续编辑后提交审批", "success");
+        } else {
+          btnSubmit.textContent = "提交审批";
+          showToast("已加载原数据，修改后提交审批", "success");
+        }
+        btnCancelEdit.classList.remove("hidden");
         document.getElementById("form-section").scrollIntoView({ behavior: "smooth" });
-        showToast("已加载原数据，修改后重新提交", "success");
       }
 
       async function deleteRecord(id) {
@@ -2198,8 +2268,8 @@
         if (history.length === 0) {
           approvalHistoryContent.innerHTML = '<div class="modal-body">暂无审批记录</div>';
         } else {
-          const actionLabels = { approve: "通过", reject: "驳回", modify_approve: "修改后通过", withdraw: "撤回审批" };
-          const actionClasses = { approve: "approve", reject: "reject", modify_approve: "modify", withdraw: "approve" };
+          const actionLabels = { approve: "通过", reject: "驳回", modify_approve: "修改后通过", withdraw: "撤回审批", submit: "提交审批", save_draft: "保存草稿" };
+          const actionClasses = { approve: "approve", reject: "reject", modify_approve: "modify", withdraw: "approve", submit: "modify", save_draft: "approve" };
           approvalHistoryContent.innerHTML = '<div class="approval-timeline">' + history.map((h) => {
             const a = h.action || "";
             const label = actionLabels[a] || a;
@@ -2374,9 +2444,6 @@ body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
           await renderRecords();
           const displayName = result.role === "admin" ? "操作员" : "管理员";
           showToast("欢迎，" + displayName, "success");
-          if (isUploader() && hasDraftContent()) {
-            setTimeout(() => { if (confirm("检测到您有未提交的暂存内容，是否恢复？")) applyDraftToForm(); }, 200);
-          }
         } else {
           loginError.textContent = result.message;
           loginPassword.value = "";
