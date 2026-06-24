@@ -632,21 +632,50 @@
       color: #5b21b6;
     }
 
+    .approval-withdrawn {
+      background: #e5e7eb;
+      color: #4b5563;
+    }
+
     /* Record card collapse */
+    .record-card.collapsed {
+      padding: 12px 18px;
+      gap: 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .record-card.collapsed:hover {
+      box-shadow: 0 4px 10px rgba(0, 56, 148, 0.12);
+    }
+
     .record-card.collapsed .record-info,
-    .record-card.collapsed .record-footer {
+    .record-card.collapsed .record-footer,
+    .record-card.collapsed .record-summary {
       display: none;
     }
 
-    .record-card.collapsed {
-      gap: 6px;
+    .record-card.collapsed .record-header {
+      margin: 0;
+    }
+
+    .record-card.collapsed .record-title {
+      font-size: 15px;
+    }
+
+    .record-card.collapsed .status-tags {
+      gap: 4px;
+    }
+
+    .record-card.collapsed .status-tag {
+      padding: 2px 8px;
+      font-size: 11px;
     }
 
     .record-toggle {
       background: none;
       border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 4px 8px;
+      padding: 3px 10px;
       cursor: pointer;
       font-size: 12px;
       color: var(--text-secondary);
@@ -670,6 +699,33 @@
       background: #f3f4f6;
       padding: 2px 8px;
       border-radius: 4px;
+    }
+
+    .record-card.card-clickable {
+      cursor: pointer;
+    }
+
+    .record-card.card-clickable:hover {
+      box-shadow: 0 4px 12px rgba(0, 176, 175, 0.25);
+    }
+
+    .record-card.card-clickable::before {
+      content: "点击重新编辑";
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 11px;
+      color: var(--primary-light);
+      background: rgba(0, 176, 175, 0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .record-card.card-clickable:hover::before {
+      opacity: 1;
     }
 
     .record-info {
@@ -1207,6 +1263,7 @@
             <option value="approved">已通过</option>
             <option value="rejected">已驳回</option>
             <option value="modified_approved">修改后通过</option>
+            <option value="withdrawn">已撤回</option>
           </select>
         </div>
         <div class="toolbar-group">
@@ -1269,6 +1326,7 @@
           </div>
           <div class="form-actions">
             <button type="submit" class="btn btn-primary" id="btn-submit">提交登记</button>
+            <button type="button" class="btn btn-secondary" id="btn-save-draft">💾 暂存</button>
             <button type="button" class="btn btn-secondary" id="btn-reset">清空</button>
             <button type="button" class="btn btn-secondary hidden" id="btn-cancel-edit">取消重新编辑</button>
           </div>
@@ -1407,14 +1465,16 @@
         PENDING: "pending",
         APPROVED: "approved",
         REJECTED: "rejected",
-        MODIFIED_APPROVED: "modified_approved"
+        MODIFIED_APPROVED: "modified_approved",
+        WITHDRAWN: "withdrawn"
       };
 
       const approvalStatusMap = {
         pending: { class: "approval-pending", label: "待审批" },
         approved: { class: "approval-approved", label: "已通过" },
         rejected: { class: "approval-rejected", label: "已驳回" },
-        modified_approved: { class: "approval-modified", label: "修改后通过" }
+        modified_approved: { class: "approval-modified", label: "修改后通过" },
+        withdrawn: { class: "approval-withdrawn", label: "已撤回" }
       };
 
       const productionStatusMap = {
@@ -1425,12 +1485,36 @@
       };
 
       const STORAGE_KEY_COLLAPSE = "longfor_oem_qc_collapsed";
+      const STORAGE_KEY_DRAFT = "longfor_oem_qc_draft";
 
       function loadCollapsedIds() {
         try { return JSON.parse(localStorage.getItem(STORAGE_KEY_COLLAPSE) || "{}"); } catch (e) { return {}; }
       }
       function saveCollapsedIds(map) {
         try { localStorage.setItem(STORAGE_KEY_COLLAPSE, JSON.stringify(map)); } catch (e) {}
+      }
+      function saveDraft(data) {
+        try {
+          const user = getCurrentUser();
+          const key = STORAGE_KEY_DRAFT + "_" + (user ? user.username : "guest");
+          localStorage.setItem(key, JSON.stringify({ data: data, savedAt: Date.now() }));
+          return true;
+        } catch (e) { return false; }
+      }
+      function loadDraft() {
+        try {
+          const user = getCurrentUser();
+          const key = STORAGE_KEY_DRAFT + "_" + (user ? user.username : "guest");
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : null;
+        } catch (e) { return null; }
+      }
+      function clearDraft() {
+        try {
+          const user = getCurrentUser();
+          const key = STORAGE_KEY_DRAFT + "_" + (user ? user.username : "guest");
+          localStorage.removeItem(key);
+        } catch (e) {}
       }
       function isRecordCollapsed(id) {
         return !!loadCollapsedIds()[id];
@@ -1455,6 +1539,19 @@
         return records.filter((r) => r.approvalStatus === APPROVAL_STATUS.PENDING).length;
       }
 
+      function hasDraftContent() {
+        const draft = loadDraft();
+        if (!draft || !draft.data) return false;
+        return Object.values(draft.data).some((v) => v && String(v).trim() !== "");
+      }
+
+      function applyDraftToForm() {
+        const draft = loadDraft();
+        if (!draft || !draft.data) return;
+        fillFormFromRecord(draft.data);
+        if (draft.savedAt) showToast("已恢复暂存内容（" + formatDate(draft.savedAt) + "）", "success");
+      }
+
       const loginScreen = document.getElementById("login-screen");
       const loginForm = document.getElementById("login-form");
       const loginUsername = document.getElementById("login-username");
@@ -1473,6 +1570,7 @@
       const btnReset = document.getElementById("btn-reset");
       const btnCancelEdit = document.getElementById("btn-cancel-edit");
       const btnSubmit = document.getElementById("btn-submit");
+      const btnSaveDraft = document.getElementById("btn-save-draft");
       const btnCancelDelete = document.getElementById("btn-cancel-delete");
       const btnConfirmDelete = document.getElementById("btn-confirm-delete");
       const btnExport = document.getElementById("btn-export");
@@ -1789,7 +1887,7 @@
           let headerHtml = '<div class="status-tags">';
           if (isFieldVisible("productionStatus")) headerHtml += '<span class="status-tag ' + ps.class + '">' + escapeHtml(ps.label) + '</span>';
           headerHtml += '<span class="status-tag ' + as.class + '">' + escapeHtml(as.label) + '</span>';
-          headerHtml += '<button type="button" class="record-toggle btn-toggle-collapse" data-id="' + record.id + '">' + (collapsed ? "展开 ▾" : "折叠 ▴") + '</button>';
+          headerHtml += '<button type="button" class="record-toggle btn-toggle-collapse" data-id="' + record.id + '">' + (collapsed ? "展开" : "收起") + '</button>';
           headerHtml += '</div>';
 
           const summaryParts = [];
@@ -1820,11 +1918,12 @@
           if (isOp && record.approvalStatus === APPROVAL_STATUS.PENDING) {
             actions.push('<button type="button" class="btn btn-primary btn-sm btn-approve" data-id="' + record.id + '">审批</button>');
           }
-          if (isAdmin && record.submittedBy === (user && user.username) && (record.approvalStatus === APPROVAL_STATUS.REJECTED || record.approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED)) {
-            actions.push('<button type="button" class="btn btn-warning btn-sm btn-reedit" data-id="' + record.id + '">重新编辑</button>');
-          }
           if (isAdmin && record.submittedBy === (user && user.username) && record.approvalStatus === APPROVAL_STATUS.PENDING) {
+            actions.push('<button type="button" class="btn btn-secondary btn-sm btn-withdraw" data-id="' + record.id + '">撤回审批</button>');
             actions.push('<button type="button" class="btn btn-danger btn-sm btn-delete" data-id="' + record.id + '">删除</button>');
+          }
+          if (isAdmin && record.submittedBy === (user && user.username) && (record.approvalStatus === APPROVAL_STATUS.REJECTED || record.approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED || record.approvalStatus === APPROVAL_STATUS.WITHDRAWN)) {
+            actions.push('<button type="button" class="btn btn-warning btn-sm btn-reedit" data-id="' + record.id + '">重新编辑</button>');
           }
           if (isAdmin && record.submittedBy === (user && user.username) && (record.approvalStatus === APPROVAL_STATUS.APPROVED || record.approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED || record.approvalStatus === APPROVAL_STATUS.REJECTED)) {
             actions.push('<button type="button" class="btn btn-secondary btn-sm btn-export-card" data-id="' + record.id + '">导出单据</button>');
@@ -1834,22 +1933,43 @@
           const timeHtml = '<div class="record-time">' + formatDate(record.createdAt) + '</div>';
 
           card.innerHTML = '<div class="record-header">' + titleHtml + headerHtml + '</div>' + summaryHtml + '<div class="record-info">' + infoRows.join("") + '</div><div class="record-footer">' + timeHtml + '<div class="record-actions">' + actions.join("") + '</div></div>';
+
+          // 操作员自己的非已通过记录：点击卡片打开编辑
+          const canReedit = isAdmin && record.submittedBy === (user && user.username) &&
+            (record.approvalStatus === APPROVAL_STATUS.PENDING ||
+             record.approvalStatus === APPROVAL_STATUS.REJECTED ||
+             record.approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED ||
+             record.approvalStatus === APPROVAL_STATUS.WITHDRAWN);
+          if (canReedit) {
+            card.classList.add("card-clickable");
+            card.dataset.reeditId = record.id;
+          }
+
           recordsList.appendChild(card);
         });
         bindRecordActions();
       }
 
       function bindRecordActions() {
-        document.querySelectorAll(".btn-approve").forEach((btn) => btn.addEventListener("click", (e) => openApprovalModal(e.currentTarget.dataset.id)));
-        document.querySelectorAll(".btn-reedit").forEach((btn) => btn.addEventListener("click", (e) => openReEditMode(e.currentTarget.dataset.id)));
-        document.querySelectorAll(".btn-history").forEach((btn) => btn.addEventListener("click", (e) => openApprovalHistory(e.currentTarget.dataset.id)));
-        document.querySelectorAll(".btn-delete").forEach((btn) => btn.addEventListener("click", (e) => { pendingDeleteId = e.currentTarget.dataset.id; openModal(confirmModal); }));
+        document.querySelectorAll(".btn-approve").forEach((btn) => btn.addEventListener("click", (e) => { e.stopPropagation(); openApprovalModal(e.currentTarget.dataset.id); }));
+        document.querySelectorAll(".btn-reedit").forEach((btn) => btn.addEventListener("click", (e) => { e.stopPropagation(); openReEditMode(e.currentTarget.dataset.id); }));
+        document.querySelectorAll(".btn-history").forEach((btn) => btn.addEventListener("click", (e) => { e.stopPropagation(); openApprovalHistory(e.currentTarget.dataset.id); }));
+        document.querySelectorAll(".btn-delete").forEach((btn) => btn.addEventListener("click", (e) => { e.stopPropagation(); pendingDeleteId = e.currentTarget.dataset.id; openModal(confirmModal); }));
         document.querySelectorAll(".btn-toggle-collapse").forEach((btn) => btn.addEventListener("click", (e) => {
+          e.stopPropagation();
           const id = e.currentTarget.dataset.id;
           toggleRecordCollapse(id);
           renderRecords();
         }));
-        document.querySelectorAll(".btn-export-card").forEach((btn) => btn.addEventListener("click", (e) => exportSingleRecordCard(e.currentTarget.dataset.id)));
+        document.querySelectorAll(".btn-export-card").forEach((btn) => btn.addEventListener("click", (e) => { e.stopPropagation(); exportSingleRecordCard(e.currentTarget.dataset.id); }));
+        document.querySelectorAll(".btn-withdraw").forEach((btn) => btn.addEventListener("click", (e) => { e.stopPropagation(); withdrawRecord(e.currentTarget.dataset.id); }));
+        document.querySelectorAll(".record-card.card-clickable").forEach((card) => {
+          card.addEventListener("click", (e) => {
+            if (e.target.closest("button")) return;
+            const id = card.dataset.reeditId;
+            if (id) openReEditMode(id);
+          });
+        });
       }
 
       async function renderRecords() {
@@ -1896,6 +2016,10 @@
         document.getElementById("material-effect").value = record.materialEffect || "";
         document.getElementById("remarks").value = record.remarks || "";
       }
+
+      async function openReEditFromCard(recordId) {
+        await openReEditMode(recordId);
+      }
       function readFormData() {
         const formData = new FormData(form);
         return {
@@ -1919,6 +2043,7 @@
         if (reeditRecordId) {
           const success = await updateRecordInCloud(reeditRecordId, Object.assign({}, data, { approvalStatus: APPROVAL_STATUS.PENDING }));
           if (!success) return;
+          clearDraft();
           resetForm();
           await renderRecords();
           showToast("重新提交成功，等待审批", "success");
@@ -1926,10 +2051,19 @@
           const newRecord = Object.assign({ id: generateId(), createdAt: Date.now() }, data);
           const saved = await saveRecordToCloud(newRecord);
           if (!saved) return;
+          clearDraft();
           resetForm();
           await renderRecords();
           showToast("登记成功，已提交审批", "success");
         }
+      }
+
+      function handleSaveDraft() {
+        const data = readFormData();
+        const hasContent = Object.values(data).some((v) => v && String(v).trim() !== "");
+        if (!hasContent) { showToast("表单为空，无需暂存", "error"); return; }
+        if (saveDraft(data)) showToast("已暂存，可在重新打开页面时恢复", "success");
+        else showToast("暂存失败", "error");
       }
 
       async function openReEditMode(recordId) {
@@ -1940,6 +2074,7 @@
         fillFormFromRecord(record);
         btnSubmit.textContent = "重新提交";
         btnCancelEdit.classList.remove("hidden");
+        clearDraft();
         document.getElementById("form-section").scrollIntoView({ behavior: "smooth" });
         showToast("已加载原数据，修改后重新提交", "success");
       }
@@ -1949,6 +2084,15 @@
         if (!removed) return;
         await renderRecords();
         showToast("删除成功", "success");
+      }
+
+      async function withdrawRecord(id) {
+        if (!confirm("确定要撤回此审批吗？撤回后可重新编辑并再次提交。")) return;
+        const ok = await updateRecordInCloud(id, { approvalStatus: APPROVAL_STATUS.WITHDRAWN });
+        if (!ok) return;
+        await saveApprovalLog(id, "withdraw", "操作员主动撤回审批", null, null);
+        await renderRecords();
+        showToast("已撤回审批", "success");
       }
 
       // Approval flow
@@ -2054,8 +2198,8 @@
         if (history.length === 0) {
           approvalHistoryContent.innerHTML = '<div class="modal-body">暂无审批记录</div>';
         } else {
-          const actionLabels = { approve: "通过", reject: "驳回", modify_approve: "修改后通过" };
-          const actionClasses = { approve: "approve", reject: "reject", modify_approve: "modify" };
+          const actionLabels = { approve: "通过", reject: "驳回", modify_approve: "修改后通过", withdraw: "撤回审批" };
+          const actionClasses = { approve: "approve", reject: "reject", modify_approve: "modify", withdraw: "approve" };
           approvalHistoryContent.innerHTML = '<div class="approval-timeline">' + history.map((h) => {
             const a = h.action || "";
             const label = actionLabels[a] || a;
@@ -2127,50 +2271,58 @@
         const as = approvalStatusMap[record.approvalStatus] || { label: record.approvalStatus };
         return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8" /><title>品控单据 - ${escapeHtml(record.materialName || "")}</title>
 <style>
-body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f4f6f9; padding: 24px; margin: 0; }
-.card { max-width: 720px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; }
-.header { background: linear-gradient(135deg, #003894 0%, #00B0AF 100%); color: #fff; padding: 24px 32px; }
-.header h1 { margin: 0; font-size: 22px; }
-.header p { margin: 6px 0 0; font-size: 13px; opacity: 0.9; }
-.body { padding: 24px 32px; }
-.row { display: flex; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #eef3fb; padding: 24px; min-height: 100vh; }
+.brand-bar { background: #003894; color: #fff; padding: 20px 32px; text-align: center; border-radius: 12px 12px 0 0; }
+.brand-bar h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+.brand-bar p { font-size: 13px; opacity: 0.9; letter-spacing: 4px; }
+.card { max-width: 720px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 56, 148, 0.18); overflow: hidden; }
+.banner { background: linear-gradient(135deg, #003894 0%, #0050b0 50%, #00B0AF 100%); color: #fff; padding: 28px 36px; }
+.banner-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.banner-sub { font-size: 13px; opacity: 0.9; margin-bottom: 14px; }
+.tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.tag { padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.4); }
+.body { padding: 28px 36px; background: #fff; }
+.section-title { font-size: 14px; font-weight: 700; color: #003894; margin: 18px 0 10px; padding-left: 10px; border-left: 4px solid #00B0AF; }
+.section-title:first-child { margin-top: 0; }
+.row { display: flex; padding: 12px 0; border-bottom: 1px dashed #e0e7f0; }
 .row:last-child { border-bottom: none; }
-.label { width: 120px; color: #6b7280; font-size: 14px; }
-.value { flex: 1; color: #1f2937; font-size: 14px; word-break: break-all; }
-.tags { display: flex; gap: 8px; margin-top: 12px; }
-.tag { padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-.tag-pending { background: #fef3c7; color: #92400e; }
-.tag-approved { background: #d1fae5; color: #065f46; }
-.tag-rejected { background: #fee2e2; color: #991b1b; }
-.tag-modified { background: #ede9fe; color: #5b21b6; }
-.footer { padding: 16px 32px; background: #f9fafb; color: #6b7280; font-size: 12px; text-align: center; }
-.slogan { text-align: center; padding: 16px; color: #6b7280; font-size: 14px; letter-spacing: 3px; }
+.label { width: 110px; color: #003894; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+.value { flex: 1; color: #1f2937; font-size: 14px; word-break: break-all; line-height: 1.6; }
+.footer { padding: 18px 36px; background: #003894; color: #fff; font-size: 12px; text-align: center; letter-spacing: 2px; }
+.footer strong { color: #00B0AF; font-weight: 700; }
 </style></head><body>
 <div class="card">
-  <div class="header">
-    <h1>OEM 品控单据</h1>
-    <p>远程质量管控 · 生产追溯</p>
+  <div class="brand-bar">
+    <h1>LONGFOR 龙湖</h1>
+    <p>善待你一生</p>
+  </div>
+  <div class="banner">
+    <div class="banner-title">OEM 品控单据</div>
+    <div class="banner-sub">远程质量管控 · 生产追溯 · 实时品控，全程可溯</div>
     <div class="tags">
-      <span class="tag tag-${as.class.replace("approval-", "")}">${escapeHtml(as.label)}</span>
-      <span class="tag" style="background:#dbeafe;color:#1e40af;">${escapeHtml(ps.label)}</span>
+      <span class="tag">审批状态：${escapeHtml(as.label)}</span>
+      <span class="tag">生产状态：${escapeHtml(ps.label)}</span>
     </div>
   </div>
   <div class="body">
+    <div class="section-title">基础信息</div>
     <div class="row"><div class="label">材料名称</div><div class="value">${escapeHtml(record.materialName || "-")}</div></div>
     <div class="row"><div class="label">工厂名称</div><div class="value">${escapeHtml(record.factoryName || "-")}</div></div>
     <div class="row"><div class="label">封样编号</div><div class="value">${escapeHtml(record.sealCode || "-")}</div></div>
     <div class="row"><div class="label">封样状态</div><div class="value">${escapeHtml(record.sealStatus || "-")}</div></div>
     <div class="row"><div class="label">材料批次</div><div class="value">${escapeHtml(record.materialBatch || "-")}</div></div>
+    <div class="section-title">材料详情</div>
     <div class="row"><div class="label">材料参数</div><div class="value">${escapeHtml(record.materialParams || "-")}</div></div>
     <div class="row"><div class="label">材料效果</div><div class="value">${escapeHtml(record.materialEffect || "-")}</div></div>
     <div class="row"><div class="label">备注</div><div class="value">${escapeHtml(record.remarks || "-")}</div></div>
+    <div class="section-title">流程信息</div>
     <div class="row"><div class="label">提交人</div><div class="value">${escapeHtml(record.submittedBy || "-")}</div></div>
     <div class="row"><div class="label">提交时间</div><div class="value">${formatDate(record.submittedAt)}</div></div>
     <div class="row"><div class="label">创建时间</div><div class="value">${formatDate(record.createdAt)}</div></div>
   </div>
-  <div class="footer">单据导出时间：${formatDate(Date.now())}</div>
+  <div class="footer">单据导出时间：${formatDate(Date.now())}　|　<strong>LONGFOR 龙湖 · 善待你一生</strong></div>
 </div>
-<div class="slogan"><strong style="color:#003894;">善待你一生</strong> · LONGFOR 龙湖</div>
 </body></html>`;
       }
 
@@ -2222,6 +2374,9 @@ body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
           await renderRecords();
           const displayName = result.role === "admin" ? "操作员" : "管理员";
           showToast("欢迎，" + displayName, "success");
+          if (isUploader() && hasDraftContent()) {
+            setTimeout(() => { if (confirm("检测到您有未提交的暂存内容，是否恢复？")) applyDraftToForm(); }, 200);
+          }
         } else {
           loginError.textContent = result.message;
           loginPassword.value = "";
@@ -2231,7 +2386,8 @@ body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
 
       btnLogout.addEventListener("click", logout);
       form.addEventListener("submit", handleSubmit);
-      btnReset.addEventListener("click", () => { resetForm(); showToast("表单已清空", "success"); });
+      btnReset.addEventListener("click", () => { clearDraft(); resetForm(); showToast("表单已清空", "success"); });
+      btnSaveDraft.addEventListener("click", handleSaveDraft);
       btnCancelEdit.addEventListener("click", () => { resetForm(); showToast("已取消重新编辑", "success"); });
       btnCancelDelete.addEventListener("click", () => { closeModal(confirmModal); pendingDeleteId = null; });
       btnConfirmDelete.addEventListener("click", async () => {
