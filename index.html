@@ -21,6 +21,7 @@
       --success: #10b981;
       --error: #ef4444;
       --warning: #f59e0b;
+      --purple: #8b5cf6;
     }
 
     * {
@@ -80,13 +81,6 @@
       z-index: 1;
     }
 
-    .header-slogan {
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.85);
-      letter-spacing: 2px;
-      margin-top: 2px;
-    }
-
     .header-left {
       display: flex;
       align-items: center;
@@ -120,20 +114,6 @@
       font-weight: 400;
     }
 
-    /* Footer slogan */
-    .footer-slogan {
-      text-align: center;
-      padding: 24px;
-      color: var(--text-secondary);
-      font-size: 14px;
-      letter-spacing: 3px;
-    }
-
-    .footer-slogan strong {
-      color: var(--primary-dark);
-      font-weight: 700;
-    }
-
     .user-info {
       display: flex;
       align-items: center;
@@ -148,6 +128,27 @@
       font-weight: 600;
     }
 
+    .notification-badge {
+      position: relative;
+    }
+
+    .badge-count {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: var(--error);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+    }
+
     .btn-logout {
       background: rgba(255, 255, 255, 0.15);
       color: #fff;
@@ -157,6 +158,7 @@
       cursor: pointer;
       font-size: 13px;
       transition: background 0.2s;
+      font-family: inherit;
     }
 
     .btn-logout:hover {
@@ -195,14 +197,6 @@
       border-radius: 14px;
       box-shadow: var(--shadow);
       object-fit: contain;
-    }
-
-    .login-slogan {
-      font-size: 16px;
-      color: var(--primary-light);
-      letter-spacing: 4px;
-      margin-bottom: 24px;
-      font-weight: 600;
     }
 
     .login-mascot {
@@ -293,7 +287,7 @@
     /* Stats */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 16px;
     }
 
@@ -307,9 +301,17 @@
       overflow: hidden;
     }
 
-    .stat-card:hover {
+    .stat-card.clickable {
+      cursor: pointer;
+    }
+
+    .stat-card.clickable:hover {
       transform: translateY(-2px);
       box-shadow: var(--shadow-hover);
+    }
+
+    .stat-card.clickable.active {
+      box-shadow: 0 0 0 3px var(--warning), var(--shadow-hover);
     }
 
     .stat-card::after {
@@ -502,6 +504,28 @@
       border-color: #fca5a5;
     }
 
+    .btn-warning {
+      background: #fff;
+      color: var(--warning);
+      border: 1px solid #fde68a;
+    }
+
+    .btn-warning:hover {
+      background: #fffbeb;
+      border-color: #fcd34d;
+    }
+
+    .btn-purple {
+      background: #fff;
+      color: var(--purple);
+      border: 1px solid #ddd6fe;
+    }
+
+    .btn-purple:hover {
+      background: #f5f3ff;
+      border-color: #c4b5fd;
+    }
+
     .btn-sm {
       padding: 6px 10px;
       font-size: 13px;
@@ -541,6 +565,7 @@
       justify-content: space-between;
       align-items: flex-start;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
     .record-title {
@@ -548,6 +573,13 @@
       font-weight: 700;
       color: var(--primary-dark);
       word-break: break-all;
+    }
+
+    .status-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .status-tag {
@@ -580,6 +612,66 @@
       color: #991b1b;
     }
 
+    .approval-pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .approval-approved {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .approval-rejected {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .approval-modified {
+      background: #ede9fe;
+      color: #5b21b6;
+    }
+
+    /* Record card collapse */
+    .record-card.collapsed .record-info,
+    .record-card.collapsed .record-footer {
+      display: none;
+    }
+
+    .record-card.collapsed {
+      gap: 6px;
+    }
+
+    .record-toggle {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+
+    .record-toggle:hover {
+      background: #f3f4f6;
+      color: var(--primary-dark);
+    }
+
+    .record-summary {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .record-summary span {
+      background: #f3f4f6;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
     .record-info {
       display: flex;
       flex-direction: column;
@@ -607,11 +699,19 @@
       margin-top: auto;
       padding-top: 12px;
       border-top: 1px solid var(--border);
+      gap: 10px;
+    }
+
+    .record-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     .record-time {
       font-size: 12px;
       color: #9ca3af;
+      flex-shrink: 0;
     }
 
     .empty-state {
@@ -724,6 +824,119 @@
       gap: 10px;
     }
 
+    .approval-modal {
+      width: min(100%, 680px);
+    }
+
+    .approval-preview {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .approval-preview h4 {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .approval-section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin: 16px 0 10px;
+    }
+
+    .approval-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .timeline-item {
+      background: #fff;
+      border-radius: 8px;
+      padding: 14px;
+      border-left: 4px solid var(--primary-light);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .timeline-item.approve {
+      border-left-color: var(--success);
+    }
+
+    .timeline-item.reject {
+      border-left-color: var(--error);
+    }
+
+    .timeline-item.modify {
+      border-left-color: var(--purple);
+    }
+
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .timeline-action {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .timeline-time {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .timeline-meta {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .timeline-comment {
+      font-size: 13px;
+      color: var(--text);
+      background: #f3f4f6;
+      padding: 8px;
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+
+    .diff-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 10px;
+      background: #fff;
+    }
+
+    .diff-table th,
+    .diff-table td {
+      padding: 8px 10px;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+
+    .diff-table th {
+      background: #f3f4f6;
+      font-weight: 600;
+    }
+
+    .diff-old {
+      color: var(--error);
+      text-decoration: line-through;
+    }
+
+    .diff-new {
+      color: var(--success);
+      font-weight: 600;
+    }
+
     /* Field settings */
     .field-settings-grid {
       display: grid;
@@ -754,10 +967,24 @@
       cursor: pointer;
     }
 
+    /* Footer slogan */
+    .footer-slogan {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      letter-spacing: 3px;
+    }
+
+    .footer-slogan strong {
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
     /* Responsive */
     @media (max-width: 1024px) {
       .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
       }
 
       .form-grid,
@@ -842,14 +1069,18 @@
         flex-direction: column;
       }
 
-      .status-tag {
-        align-self: flex-start;
+      .status-tags {
+        justify-content: flex-start;
       }
 
       .record-footer {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
+      }
+
+      .record-actions {
+        width: 100%;
       }
 
       .modal-actions {
@@ -882,17 +1113,9 @@
 <body>
   <!-- 登录页 -->
   <div class="login-screen" id="login-screen">
-    <img
-      src="页面图片/吉祥物.png"
-      alt=""
-      class="login-mascot-left"
-    />
+    <img src="页面图片/吉祥物.png" alt="" class="login-mascot-left" />
     <div class="login-card">
-      <img
-        src="页面图片/logo1.jpg"
-        alt="LONGFOR 龙湖"
-        class="login-logo"
-      />
+      <img src="页面图片/logo1.jpg" alt="LONGFOR 龙湖" class="login-logo" />
       <div class="login-title">OEM 品控云台</div>
       <div class="login-subtitle">实时品控，全程可溯</div>
       <form class="login-form" id="login-form">
@@ -908,27 +1131,15 @@
         <button type="submit" class="btn btn-primary">登 录</button>
       </form>
     </div>
-    <img
-      src="页面图片/吉祥物.png"
-      alt=""
-      class="login-mascot"
-    />
+    <img src="页面图片/吉祥物.png" alt="" class="login-mascot" />
   </div>
 
   <!-- Header -->
   <header class="header" id="main-header">
-    <img
-      src="页面图片/吉祥物.png"
-      alt=""
-      class="header-bg-mascot"
-    />
+    <img src="页面图片/吉祥物.png" alt="" class="header-bg-mascot" />
     <div class="header-inner">
       <div class="header-left">
-        <img
-          src="页面图片/logo1.jpg"
-          alt="LONGFOR 龙湖"
-          class="logo"
-        />
+        <img src="页面图片/logo1.jpg" alt="LONGFOR 龙湖" class="logo" />
         <div class="brand">
           <span class="brand-title">OEM 品控云台</span>
           <span class="brand-subtitle">实时品控，全程可溯</span>
@@ -936,13 +1147,17 @@
       </div>
       <div class="user-info">
         <span class="user-role" id="user-role">未登录</span>
+        <div class="notification-badge hidden" id="pending-badge">
+          <button type="button" class="btn-logout" id="btn-pending-list">
+            待审批 <span class="badge-count" id="pending-count">0</span>
+          </button>
+        </div>
         <button type="button" class="btn-logout" id="btn-logout">退出登录</button>
       </div>
     </div>
   </header>
 
   <main class="container" id="main-container">
-    <!-- 统计看板 -->
     <section class="section" aria-labelledby="stats-title">
       <h2 class="section-title" id="stats-title">数据统计看板</h2>
       <div class="stats-grid">
@@ -962,19 +1177,17 @@
           <div class="stat-label">已通过</div>
           <div class="stat-value" id="stat-passed">0</div>
         </div>
+        <div class="stat-card stat-card-pending clickable" id="stat-card-pending">
+          <div class="stat-label">待审批</div>
+          <div class="stat-value" id="stat-pending">0</div>
+        </div>
       </div>
     </section>
 
-    <!-- 工具栏：搜索筛选 + 导出 -->
     <section class="section" id="toolbar-section">
       <div class="toolbar">
         <div class="toolbar-group">
-          <input
-            type="text"
-            id="search-input"
-            class="search-input"
-            placeholder="搜索材料名称、工厂、批次、封样编号"
-          />
+          <input type="text" id="search-input" class="search-input" placeholder="搜索材料名称、工厂、批次、封样编号" />
           <select id="filter-production-status" class="filter-select">
             <option value="">全部生产状态</option>
             <option value="生产中">生产中</option>
@@ -988,15 +1201,21 @@
             <option value="已封样">已封样</option>
             <option value="封样确认中">封样确认中</option>
           </select>
+          <select id="filter-approval-status" class="filter-select">
+            <option value="">全部审批状态</option>
+            <option value="pending">待审批</option>
+            <option value="approved">已通过</option>
+            <option value="rejected">已驳回</option>
+            <option value="modified_approved">修改后通过</option>
+          </select>
         </div>
-        <div class="toolbar-group admin-only">
-          <button type="button" class="btn btn-secondary btn-icon" id="btn-export">📥 导出 Excel</button>
+        <div class="toolbar-group">
+          <button type="button" class="btn btn-secondary btn-icon" id="btn-export">📥 导出 CSV</button>
         </div>
       </div>
     </section>
 
-    <!-- 登记表单 -->
-    <section class="section admin-only" aria-labelledby="form-title" id="form-section">
+    <section class="section uploader-only hidden" aria-labelledby="form-title" id="form-section">
       <h2 class="section-title" id="form-title">品控记录登记</h2>
       <div class="card">
         <form id="qc-form" novalidate>
@@ -1011,7 +1230,6 @@
                 <option value="已驳回">已驳回</option>
               </select>
             </div>
-
             <div class="form-group">
               <label for="seal-status" class="form-label">封样状态</label>
               <select id="seal-status" name="sealStatus" class="form-select">
@@ -1020,77 +1238,61 @@
                 <option value="封样确认中">封样确认中</option>
               </select>
             </div>
-
             <div class="form-group">
               <label for="factory-name" class="form-label required">工厂名称</label>
               <input type="text" id="factory-name" name="factoryName" class="form-control" placeholder="请输入工厂名称" required />
             </div>
-
             <div class="form-group">
               <label for="seal-code" class="form-label">封样编号</label>
               <input type="text" id="seal-code" name="sealCode" class="form-control" placeholder="例：FY-2026-001" />
             </div>
-
             <div class="form-group">
               <label for="material-name" class="form-label required">材料名称</label>
               <input type="text" id="material-name" name="materialName" class="form-control" placeholder="请输入材料名称" required />
             </div>
-
             <div class="form-group">
               <label for="material-batch" class="form-label required">材料批次</label>
               <input type="text" id="material-batch" name="materialBatch" class="form-control" placeholder="请输入材料批次" required />
             </div>
-
             <div class="form-group">
               <label for="material-params" class="form-label">材料参数</label>
               <input type="text" id="material-params" name="materialParams" class="form-control" placeholder="密度、强度等指标" />
             </div>
-
             <div class="form-group">
               <label for="material-effect" class="form-label">材料效果</label>
               <input type="text" id="material-effect" name="materialEffect" class="form-control" placeholder="实际打样效果描述" />
             </div>
-
             <div class="form-group full-width">
               <label for="remarks" class="form-label">备注</label>
               <textarea id="remarks" name="remarks" class="form-textarea" placeholder="补充说明"></textarea>
             </div>
           </div>
-
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary">提交登记</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit">提交登记</button>
             <button type="button" class="btn btn-secondary" id="btn-reset">清空</button>
+            <button type="button" class="btn btn-secondary hidden" id="btn-cancel-edit">取消重新编辑</button>
           </div>
         </form>
       </div>
     </section>
 
-    <!-- 记录列表 -->
     <section class="section" aria-labelledby="list-title">
       <div class="section-header">
         <h2 class="section-title" id="list-title">品控记录列表</h2>
-        <button type="button" class="btn btn-secondary btn-icon admin-only" id="btn-field-settings">⚙️ 调整字段</button>
+        <button type="button" class="btn btn-secondary btn-icon" id="btn-field-settings">⚙️ 调整字段</button>
       </div>
-      <div id="records-list" class="records-grid" aria-live="polite">
-        <!-- 动态渲染 -->
-      </div>
+      <div id="records-list" class="records-grid" aria-live="polite"></div>
     </section>
   </main>
 
-  <footer class="footer-slogan">
-    <strong>善待你一生</strong> · LONGFOR 龙湖
-  </footer>
+  <footer class="footer-slogan"><strong>善待你一生</strong> · LONGFOR 龙湖</footer>
 
-  <!-- Toast 容器 -->
   <div class="toast-container" id="toast-container" aria-live="assertive"></div>
 
-  <!-- 删除确认弹窗 -->
   <div class="modal-overlay" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal">
       <div class="modal-title" id="modal-title">确认删除</div>
-      <div class="modal-body">
-        确定要删除该条品控记录吗？删除后将无法恢复。
-      </div>
+      <div class="modal-body">确定要删除该条品控记录吗？删除后将无法恢复。</div>
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-delete">取消</button>
         <button type="button" class="btn btn-danger btn-sm" id="btn-confirm-delete">删除</button>
@@ -1098,19 +1300,45 @@
     </div>
   </div>
 
-  <!-- 字段设置弹窗 -->
   <div class="modal-overlay" id="field-settings-modal" role="dialog" aria-modal="true" aria-labelledby="field-settings-title">
     <div class="modal">
       <div class="modal-title" id="field-settings-title">调整显示字段</div>
-      <div class="modal-body">
-        勾选需要在记录卡片中显示的字段：
-      </div>
-      <div class="field-settings-grid" id="field-settings-grid">
-        <!-- 动态渲染 -->
-      </div>
+      <div class="modal-body">勾选需要在记录卡片中显示的字段：</div>
+      <div class="field-settings-grid" id="field-settings-grid"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-field-settings">取消</button>
         <button type="button" class="btn btn-primary btn-sm" id="btn-save-field-settings">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="approval-modal" role="dialog" aria-modal="true" aria-labelledby="approval-title">
+    <div class="modal approval-modal">
+      <div class="modal-title" id="approval-title">审批品控记录</div>
+      <div class="approval-preview" id="approval-record-preview"></div>
+      <div class="form-group">
+        <label for="approval-comment" class="form-label">审批意见（可选）</label>
+        <textarea id="approval-comment" class="form-textarea" placeholder="请输入审批意见"></textarea>
+      </div>
+      <div id="approval-edit-section" class="hidden">
+        <div class="approval-section-title">修改字段</div>
+        <div class="form-grid" id="approval-edit-grid"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-approval-cancel">取消</button>
+        <button type="button" class="btn btn-danger btn-sm" id="btn-approval-reject">驳回</button>
+        <button type="button" class="btn btn-purple btn-sm" id="btn-approval-modify">修改后通过</button>
+        <button type="button" class="btn btn-primary btn-sm" id="btn-approval-pass">直接通过</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="approval-history-modal" role="dialog" aria-modal="true" aria-labelledby="approval-history-title">
+    <div class="modal approval-modal">
+      <div class="modal-title" id="approval-history-title">审批历史</div>
+      <div id="approval-history-content"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-close-history">关闭</button>
       </div>
     </div>
   </div>
@@ -1119,10 +1347,10 @@
     (function () {
       "use strict";
 
-      // Supabase 配置
       const SUPABASE_URL = "https://pwojiqrdsoezglwvyxyp.supabase.co";
       const SUPABASE_KEY = "sb_publishable_zZ6nQJ-2YAMjZXBlVe9dcQ_tejgN1Ce";
       const SUPABASE_TABLE = "qc_records";
+      const SUPABASE_APPROVALS_TABLE = "qc_approvals";
 
       const STORAGE_KEY_USER = "longfor_oem_qc_user";
       const STORAGE_KEY_FIELD_PREFS = "longfor_oem_qc_field_prefs";
@@ -1145,7 +1373,18 @@
         { key: "remarks", label: "备注", defaultVisible: false }
       ];
 
-      // Supabase 数据库字段与前端字段的映射
+      const EDITABLE_FIELDS = [
+        { key: "productionStatus", label: "生产状态", type: "select", options: ["生产中", "已封样待确认", "已通过", "已驳回"] },
+        { key: "sealStatus", label: "封样状态", type: "select", options: ["未封样", "已封样", "封样确认中"] },
+        { key: "factoryName", label: "工厂名称", type: "text" },
+        { key: "sealCode", label: "封样编号", type: "text" },
+        { key: "materialName", label: "材料名称", type: "text" },
+        { key: "materialBatch", label: "材料批次", type: "text" },
+        { key: "materialParams", label: "材料参数", type: "text" },
+        { key: "materialEffect", label: "材料效果", type: "text" },
+        { key: "remarks", label: "备注", type: "textarea" }
+      ];
+
       const DB_FIELD_MAP = {
         id: "id",
         production_status: "productionStatus",
@@ -1157,7 +1396,25 @@
         material_params: "materialParams",
         material_effect: "materialEffect",
         remarks: "remarks",
-        created_at: "createdAt"
+        created_at: "createdAt",
+        approval_status: "approvalStatus",
+        submitted_by: "submittedBy",
+        submitted_at: "submittedAt",
+        updated_at: "updatedAt"
+      };
+
+      const APPROVAL_STATUS = {
+        PENDING: "pending",
+        APPROVED: "approved",
+        REJECTED: "rejected",
+        MODIFIED_APPROVED: "modified_approved"
+      };
+
+      const approvalStatusMap = {
+        pending: { class: "approval-pending", label: "待审批" },
+        approved: { class: "approval-approved", label: "已通过" },
+        rejected: { class: "approval-rejected", label: "已驳回" },
+        modified_approved: { class: "approval-modified", label: "修改后通过" }
       };
 
       const productionStatusMap = {
@@ -1167,7 +1424,37 @@
         "已驳回": { class: "status-rejected", label: "已驳回" }
       };
 
-      // DOM refs
+      const STORAGE_KEY_COLLAPSE = "longfor_oem_qc_collapsed";
+
+      function loadCollapsedIds() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY_COLLAPSE) || "{}"); } catch (e) { return {}; }
+      }
+      function saveCollapsedIds(map) {
+        try { localStorage.setItem(STORAGE_KEY_COLLAPSE, JSON.stringify(map)); } catch (e) {}
+      }
+      function isRecordCollapsed(id) {
+        return !!loadCollapsedIds()[id];
+      }
+      function toggleRecordCollapse(id) {
+        const map = loadCollapsedIds();
+        if (map[id]) { delete map[id]; } else { map[id] = true; }
+        saveCollapsedIds(map);
+      }
+      function shouldAutoCollapse(approvalStatus) {
+        return approvalStatus === APPROVAL_STATUS.APPROVED ||
+               approvalStatus === APPROVAL_STATUS.REJECTED ||
+               approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED;
+      }
+
+      function getMyPendingCount(records) {
+        const user = getCurrentUser();
+        if (!user) return 0;
+        if (isUploader()) {
+          return records.filter((r) => r.submittedBy === user.username && r.approvalStatus === APPROVAL_STATUS.PENDING).length;
+        }
+        return records.filter((r) => r.approvalStatus === APPROVAL_STATUS.PENDING).length;
+      }
+
       const loginScreen = document.getElementById("login-screen");
       const loginForm = document.getElementById("login-form");
       const loginUsername = document.getElementById("login-username");
@@ -1184,6 +1471,8 @@
       const fieldSettingsModal = document.getElementById("field-settings-modal");
       const fieldSettingsGrid = document.getElementById("field-settings-grid");
       const btnReset = document.getElementById("btn-reset");
+      const btnCancelEdit = document.getElementById("btn-cancel-edit");
+      const btnSubmit = document.getElementById("btn-submit");
       const btnCancelDelete = document.getElementById("btn-cancel-delete");
       const btnConfirmDelete = document.getElementById("btn-confirm-delete");
       const btnExport = document.getElementById("btn-export");
@@ -1193,165 +1482,101 @@
       const searchInput = document.getElementById("search-input");
       const filterProductionStatus = document.getElementById("filter-production-status");
       const filterSealStatus = document.getElementById("filter-seal-status");
+      const filterApprovalStatus = document.getElementById("filter-approval-status");
+      const pendingBadge = document.getElementById("pending-badge");
+      const pendingCountEl = document.getElementById("pending-count");
+      const btnPendingList = document.getElementById("btn-pending-list");
+      const approvalModal = document.getElementById("approval-modal");
+      const approvalRecordPreview = document.getElementById("approval-record-preview");
+      const approvalComment = document.getElementById("approval-comment");
+      const approvalEditSection = document.getElementById("approval-edit-section");
+      const approvalEditGrid = document.getElementById("approval-edit-grid");
+      const btnApprovalCancel = document.getElementById("btn-approval-cancel");
+      const btnApprovalReject = document.getElementById("btn-approval-reject");
+      const btnApprovalModify = document.getElementById("btn-approval-modify");
+      const btnApprovalPass = document.getElementById("btn-approval-pass");
+      const approvalHistoryModal = document.getElementById("approval-history-modal");
+      const approvalHistoryContent = document.getElementById("approval-history-content");
+      const btnCloseHistory = document.getElementById("btn-close-history");
 
       let pendingDeleteId = null;
       let supabaseClient = null;
+      let currentApprovalRecord = null;
+      let reeditRecordId = null;
 
-      const filters = {
-        keyword: "",
-        productionStatus: "",
-        sealStatus: ""
-      };
+      const filters = { keyword: "", productionStatus: "", sealStatus: "", approvalStatus: "" };
 
       function generateId() {
         return "rec_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
       }
 
       function formatDate(ts) {
+        if (!ts) return "-";
         const d = new Date(ts);
         const pad = (n) => String(n).padStart(2, "0");
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
       }
 
       function escapeHtml(str) {
         if (str == null) return "";
-        return String(str)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#039;");
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
       }
 
-      function escapeXml(str) {
-        if (str == null) return "";
-        return String(str)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&apos;");
-      }
-
-      // 初始化 Supabase
       function initSupabase() {
         try {
           supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-          console.log("Supabase 初始化成功");
           return true;
         } catch (e) {
-          console.error("Supabase 初始化失败", e);
-          showToast("云服务连接失败，请检查网络或配置", "error");
+          console.error("Supabase init failed", e);
           return false;
         }
       }
 
-      // 把 Supabase 返回的 snake_case 数据转为前端 camelCase
       function mapDbToRecord(dbRow) {
         const record = {};
         Object.keys(DB_FIELD_MAP).forEach((dbKey) => {
           const appKey = DB_FIELD_MAP[dbKey];
-          record[appKey] = dbRow[dbKey] !== undefined ? dbRow[dbKey] : "";
+          record[appKey] = dbRow[dbKey] !== undefined && dbRow[dbKey] !== null ? dbRow[dbKey] : "";
         });
+        if (!record.approvalStatus) record.approvalStatus = APPROVAL_STATUS.APPROVED;
         return record;
       }
 
-      // 把前端 camelCase 数据转为 Supabase snake_case
       function mapRecordToDb(record) {
         const dbRow = {};
         Object.keys(DB_FIELD_MAP).forEach((dbKey) => {
           const appKey = DB_FIELD_MAP[dbKey];
-          if (record[appKey] !== undefined) {
-            dbRow[dbKey] = record[appKey];
-          }
+          if (record[appKey] !== undefined) dbRow[dbKey] = record[appKey];
         });
         return dbRow;
       }
 
-      // Storage helpers
       function getCurrentUser() {
-        try {
-          const raw = sessionStorage.getItem(STORAGE_KEY_USER);
-          return raw ? JSON.parse(raw) : null;
-        } catch (e) {
-          return null;
-        }
+        try { return JSON.parse(sessionStorage.getItem(STORAGE_KEY_USER) || "null"); } catch (e) { return null; }
       }
+      function setCurrentUser(user) { sessionStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user)); }
+      function clearCurrentUser() { sessionStorage.removeItem(STORAGE_KEY_USER); }
+      function getCurrentRole() { const u = getCurrentUser(); return u ? u.role : null; }
+      function isUploader() { return getCurrentRole() === "admin"; }
+      function isReviewer() { return getCurrentRole() === "operator"; }
 
-      function setCurrentUser(user) {
-        try {
-          sessionStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-        } catch (e) {
-          console.error("写入 sessionStorage 失败", e);
-        }
-      }
-
-      function clearCurrentUser() {
-        sessionStorage.removeItem(STORAGE_KEY_USER);
-      }
-
-      function getCurrentRole() {
-        const user = getCurrentUser();
-        return user ? user.role : null;
-      }
-
-      function isUploader() {
-        return getCurrentRole() === "admin";
-      }
 
       function loadFieldPrefs() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY_FIELD_PREFS);
-          if (raw) return JSON.parse(raw);
-        } catch (e) {
-          console.error("读取字段偏好失败", e);
-        }
-        return getDefaultFieldPrefs();
-      }
-
-      function saveFieldPrefs(prefs) {
-        try {
-          localStorage.setItem(STORAGE_KEY_FIELD_PREFS, JSON.stringify(prefs));
-        } catch (e) {
-          console.error("保存字段偏好失败", e);
-        }
-      }
-
-      function getDefaultFieldPrefs() {
+        try { const raw = localStorage.getItem(STORAGE_KEY_FIELD_PREFS); if (raw) return JSON.parse(raw); } catch (e) {}
         const prefs = {};
-        FIELD_DEFS.forEach((f) => {
-          prefs[f.key] = f.defaultVisible;
-        });
+        FIELD_DEFS.forEach((f) => { prefs[f.key] = f.defaultVisible; });
         return prefs;
       }
+      function saveFieldPrefs(prefs) { try { localStorage.setItem(STORAGE_KEY_FIELD_PREFS, JSON.stringify(prefs)); } catch (e) {} }
+      function isFieldVisible(key) { return loadFieldPrefs()[key] !== false; }
 
-      function isFieldVisible(key) {
-        const prefs = loadFieldPrefs();
-        return prefs[key] !== false;
-      }
-
-      // Auth
       function login(username, password) {
-        const account = ACCOUNTS.find(
-          (a) => a.username === username && a.password === password
-        );
-        if (!account) {
-          return { success: false, message: "用户名或密码错误" };
-        }
-        setCurrentUser({
-          role: account.role,
-          username: account.username,
-          loginAt: Date.now()
-        });
+        const account = ACCOUNTS.find((a) => a.username === username && a.password === password);
+        if (!account) return { success: false, message: "用户名或密码错误" };
+        setCurrentUser({ role: account.role, username: account.username, loginAt: Date.now() });
         return { success: true, role: account.role };
       }
-
-      function logout() {
-        clearCurrentUser();
-        showLoginScreen();
-        showToast("已退出登录", "success");
-      }
-
+      function logout() { clearCurrentUser(); showLoginScreen(); showToast("已退出登录", "success"); }
       function showLoginScreen() {
         loginScreen.classList.remove("hidden");
         mainHeader.classList.add("hidden");
@@ -1360,7 +1585,6 @@
         loginUsername.focus();
         loginError.textContent = "";
       }
-
       function showMainApp() {
         loginScreen.classList.add("hidden");
         mainHeader.classList.remove("hidden");
@@ -1371,19 +1595,8 @@
         const role = getCurrentRole();
         const roleText = role === "admin" ? "操作员" : role === "operator" ? "管理员" : "未登录";
         userRole.textContent = roleText;
-
-        // 操作员：负责登记/上传数据（表单、导出、调整字段、删除自己的记录）
-        // 管理员：负责查看数据（列表、统计、搜索筛选、导出）
-        const uploader = isUploader();
-
-        document.querySelectorAll(".admin-only").forEach((el) => {
-          el.classList.toggle("hidden", !uploader);
-        });
-
-        // 管理员（查看者）也能看到导出按钮和工具栏
-        document.querySelectorAll("#toolbar-section").forEach((el) => {
-          el.classList.remove("hidden");
-        });
+        document.querySelectorAll(".uploader-only").forEach((el) => el.classList.toggle("hidden", !isUploader()));
+        document.querySelectorAll(".operator-only").forEach((el) => el.classList.toggle("hidden", !isReviewer()));
       }
 
       async function initAuth() {
@@ -1394,25 +1607,19 @@
           showMainApp();
           applyRoleUI();
           await renderRecords();
-        } else {
-          showLoginScreen();
-        }
+        } else { showLoginScreen(); }
       }
 
-      // Supabase data operations
       async function loadRecordsFromCloud() {
         if (!supabaseClient) return [];
         try {
-          const { data, error } = await supabaseClient
-            .from(SUPABASE_TABLE)
-            .select("*")
-            .order("created_at", { ascending: false })
-            .limit(1000);
+          let query = supabaseClient.from(SUPABASE_TABLE).select("*").order("created_at", { ascending: false }).limit(1000);
+          const { data, error } = await query;
           if (error) throw error;
           return (data || []).map(mapDbToRecord);
         } catch (e) {
-          console.error("读取云端数据失败", e);
-          showToast("读取数据失败，请检查网络", "error");
+          console.error("Read failed", e);
+          showToast("读取数据失败", "error");
           return [];
         }
       }
@@ -1420,13 +1627,37 @@
       async function saveRecordToCloud(record) {
         if (!supabaseClient) return false;
         try {
+          const user = getCurrentUser();
           const dbRow = mapRecordToDb(record);
+          dbRow.approval_status = APPROVAL_STATUS.PENDING;
+          dbRow.submitted_by = (user && user.username) || "unknown";
+          dbRow.submitted_at = Date.now();
+          dbRow.updated_at = Date.now();
           const { error } = await supabaseClient.from(SUPABASE_TABLE).insert([dbRow]);
           if (error) throw error;
           return true;
         } catch (e) {
-          console.error("保存云端数据失败", e);
-          showToast("保存失败，请检查网络或数据库权限", "error");
+          console.error("Save failed", e);
+          showToast("保存失败", "error");
+          return false;
+        }
+      }
+
+      async function updateRecordInCloud(id, updates) {
+        if (!supabaseClient) return false;
+        try {
+          const dbUpdates = {};
+          Object.keys(DB_FIELD_MAP).forEach((dbKey) => {
+            const appKey = DB_FIELD_MAP[dbKey];
+            if (updates[appKey] !== undefined) dbUpdates[dbKey] = updates[appKey];
+          });
+          dbUpdates.updated_at = Date.now();
+          const { error } = await supabaseClient.from(SUPABASE_TABLE).update(dbUpdates).eq("id", id);
+          if (error) throw error;
+          return true;
+        } catch (e) {
+          console.error("Update failed", e);
+          showToast("更新失败", "error");
           return false;
         }
       }
@@ -1438,28 +1669,63 @@
           if (error) throw error;
           return true;
         } catch (e) {
-          console.error("删除云端数据失败", e);
-          showToast("删除失败，请检查网络", "error");
+          console.error("Delete failed", e);
+          showToast("删除失败", "error");
           return false;
         }
       }
 
-      // Filters
+      async function saveApprovalLog(recordId, action, comment, originalData, modifiedData) {
+        if (!supabaseClient) return false;
+        try {
+          const user = getCurrentUser();
+          const row = {
+            record_id: recordId,
+            approver: (user && user.username) || "unknown",
+            action: action,
+            comment: comment || null,
+            original_data: originalData || null,
+            modified_data: modifiedData || null,
+            created_at: Date.now()
+          };
+          const { error } = await supabaseClient.from(SUPABASE_APPROVALS_TABLE).insert([row]);
+          if (error) throw error;
+          return true;
+        } catch (e) {
+          console.error("Save approval log failed", e);
+          return false;
+        }
+      }
+
+      async function loadApprovalHistory(recordId) {
+        if (!supabaseClient) return [];
+        try {
+          const { data, error } = await supabaseClient
+            .from(SUPABASE_APPROVALS_TABLE)
+            .select("*")
+            .eq("record_id", recordId)
+            .order("created_at", { ascending: true });
+          if (error) throw error;
+          return data || [];
+        } catch (e) {
+          console.error("Load history failed", e);
+          return [];
+        }
+      }
+
+      function getPendingCount(records) {
+        return records.filter((r) => r.approvalStatus === APPROVAL_STATUS.PENDING).length;
+      }
+
+
       function filterRecords(records) {
         const keyword = filters.keyword.trim().toLowerCase();
         return records.filter((r) => {
           if (filters.productionStatus && r.productionStatus !== filters.productionStatus) return false;
           if (filters.sealStatus && r.sealStatus !== filters.sealStatus) return false;
+          if (filters.approvalStatus && r.approvalStatus !== filters.approvalStatus) return false;
           if (keyword) {
-            const haystack = [
-              r.materialName,
-              r.factoryName,
-              r.materialBatch,
-              r.sealCode
-            ]
-              .filter(Boolean)
-              .join(" ")
-              .toLowerCase();
+            const haystack = [r.materialName, r.factoryName, r.materialBatch, r.sealCode].filter(Boolean).join(" ").toLowerCase();
             if (!haystack.includes(keyword)) return false;
           }
           return true;
@@ -1468,10 +1734,7 @@
 
       function debounce(fn, ms) {
         let timer = null;
-        return function (...args) {
-          clearTimeout(timer);
-          timer = setTimeout(() => fn.apply(this, args), ms);
-        };
+        return function (...args) { clearTimeout(timer); timer = setTimeout(() => fn.apply(this, args), ms); };
       }
 
       async function applyFilters() {
@@ -1479,59 +1742,69 @@
         const filtered = filterRecords(records);
         renderStats(filtered);
         renderList(filtered);
+        updatePendingBadge(records);
+        updatePendingCardActive();
       }
 
-      // Rendering
       function renderStats(records) {
         const total = records.length;
         const production = records.filter((r) => r.productionStatus === "生产中").length;
         const sealed = records.filter((r) => r.sealStatus === "已封样").length;
         const passed = records.filter((r) => r.productionStatus === "已通过").length;
-
+        const pending = getMyPendingCount(records);
         document.getElementById("stat-total").textContent = total;
         document.getElementById("stat-production").textContent = production;
         document.getElementById("stat-sealed").textContent = sealed;
         document.getElementById("stat-passed").textContent = passed;
+        const pendingEl = document.getElementById("stat-pending");
+        if (pendingEl) pendingEl.textContent = pending;
+      }
+
+      function updatePendingBadge(allRecords) {
+        const records = allRecords || [];
+        const count = getMyPendingCount(records);
+        if (count > 0) {
+          pendingBadge.classList.remove("hidden");
+          pendingCountEl.textContent = count > 99 ? "99+" : count;
+        } else { pendingBadge.classList.add("hidden"); }
       }
 
       function renderList(records) {
         recordsList.innerHTML = "";
-
         if (records.length === 0) {
-          recordsList.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-icon">📋</div>
-              <div>暂无符合条件的品控记录</div>
-            </div>
-          `;
+          recordsList.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div>暂无符合条件的品控记录</div></div>';
           return;
         }
-
+        const user = getCurrentUser();
+        const isAdmin = isUploader();
+        const isOp = isReviewer();
         records.forEach((record) => {
-          const status = productionStatusMap[record.productionStatus] || { class: "", label: record.productionStatus };
+          const ps = productionStatusMap[record.productionStatus] || { class: "", label: record.productionStatus };
+          const as = approvalStatusMap[record.approvalStatus] || { class: "approval-approved", label: "已通过" };
           const card = document.createElement("div");
           card.className = "record-card";
+          const collapsed = shouldAutoCollapse(record.approvalStatus) && isRecordCollapsed(record.id);
+          if (collapsed) card.classList.add("collapsed");
 
-          let headerHtml = "";
-          if (isFieldVisible("materialName")) {
-            headerHtml += `<div class="record-title">${escapeHtml(record.materialName)}</div>`;
-          }
-          if (isFieldVisible("productionStatus")) {
-            headerHtml += `<span class="status-tag ${status.class}">${escapeHtml(status.label)}</span>`;
-          }
+          let headerHtml = '<div class="status-tags">';
+          if (isFieldVisible("productionStatus")) headerHtml += '<span class="status-tag ' + ps.class + '">' + escapeHtml(ps.label) + '</span>';
+          headerHtml += '<span class="status-tag ' + as.class + '">' + escapeHtml(as.label) + '</span>';
+          headerHtml += '<button type="button" class="record-toggle btn-toggle-collapse" data-id="' + record.id + '">' + (collapsed ? "展开 ▾" : "折叠 ▴") + '</button>';
+          headerHtml += '</div>';
+
+          const summaryParts = [];
+          if (record.factoryName) summaryParts.push('<span>工厂：' + escapeHtml(record.factoryName) + '</span>');
+          if (record.materialBatch) summaryParts.push('<span>批次：' + escapeHtml(record.materialBatch) + '</span>');
+          if (record.submittedBy) summaryParts.push('<span>提交人：' + escapeHtml(record.submittedBy) + '</span>');
+          const summaryHtml = summaryParts.length > 0 ? '<div class="record-summary">' + summaryParts.join("") + '</div>' : "";
 
           const infoRows = [];
-          const addRow = (key, label, value, alwaysShow = false) => {
+          const addRow = (key, label, value, alwaysShow) => {
             if (!isFieldVisible(key) && !alwaysShow) return;
             if (!alwaysShow && (!value || value === "")) return;
-            infoRows.push(`
-              <div class="record-info-row">
-                <span class="record-info-label">${escapeHtml(label)}：</span>
-                <span>${escapeHtml(key === "createdAt" ? formatDate(value) : value)}</span>
-              </div>
-            `);
+            const display = key === "createdAt" || key === "submittedAt" ? formatDate(value) : escapeHtml(value);
+            infoRows.push('<div class="record-info-row"><span class="record-info-label">' + escapeHtml(label) + '：</span><span>' + display + '</span></div>');
           };
-
           addRow("factoryName", "工厂", record.factoryName);
           addRow("materialBatch", "材料批次", record.materialBatch);
           addRow("sealCode", "封样编号", record.sealCode);
@@ -1540,32 +1813,43 @@
           addRow("materialEffect", "材料效果", record.materialEffect);
           addRow("remarks", "备注", record.remarks);
           addRow("createdAt", "创建时间", record.createdAt);
+          addRow("submittedBy", "提交人", record.submittedBy);
 
-          const deleteBtnHtml = isUploader()
-            ? `<button type="button" class="btn btn-danger btn-sm" data-id="${record.id}" aria-label="删除记录">🗑️ 删除</button>`
-            : "";
+          const actions = [];
+          actions.push('<button type="button" class="btn btn-secondary btn-sm btn-history" data-id="' + record.id + '">历史</button>');
+          if (isOp && record.approvalStatus === APPROVAL_STATUS.PENDING) {
+            actions.push('<button type="button" class="btn btn-primary btn-sm btn-approve" data-id="' + record.id + '">审批</button>');
+          }
+          if (isAdmin && record.submittedBy === (user && user.username) && (record.approvalStatus === APPROVAL_STATUS.REJECTED || record.approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED)) {
+            actions.push('<button type="button" class="btn btn-warning btn-sm btn-reedit" data-id="' + record.id + '">重新编辑</button>');
+          }
+          if (isAdmin && record.submittedBy === (user && user.username) && record.approvalStatus === APPROVAL_STATUS.PENDING) {
+            actions.push('<button type="button" class="btn btn-danger btn-sm btn-delete" data-id="' + record.id + '">删除</button>');
+          }
+          if (isAdmin && record.submittedBy === (user && user.username) && (record.approvalStatus === APPROVAL_STATUS.APPROVED || record.approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED || record.approvalStatus === APPROVAL_STATUS.REJECTED)) {
+            actions.push('<button type="button" class="btn btn-secondary btn-sm btn-export-card" data-id="' + record.id + '">导出单据</button>');
+          }
 
-          card.innerHTML = `
-            <div class="record-header">
-              ${headerHtml || `<div class="record-title">品控记录</div>`}
-            </div>
-            <div class="record-info">
-              ${infoRows.join("")}
-            </div>
-            <div class="record-footer">
-              <div class="record-time">${formatDate(record.createdAt)}</div>
-              ${deleteBtnHtml}
-            </div>
-          `;
+          const titleHtml = isFieldVisible("materialName") ? '<div class="record-title">' + escapeHtml(record.materialName) + '</div>' : '<div class="record-title">品控记录</div>';
+          const timeHtml = '<div class="record-time">' + formatDate(record.createdAt) + '</div>';
+
+          card.innerHTML = '<div class="record-header">' + titleHtml + headerHtml + '</div>' + summaryHtml + '<div class="record-info">' + infoRows.join("") + '</div><div class="record-footer">' + timeHtml + '<div class="record-actions">' + actions.join("") + '</div></div>';
           recordsList.appendChild(card);
         });
+        bindRecordActions();
+      }
 
-        recordsList.querySelectorAll("button[data-id]").forEach((btn) => {
-          btn.addEventListener("click", (e) => {
-            pendingDeleteId = e.currentTarget.dataset.id;
-            openModal(confirmModal);
-          });
-        });
+      function bindRecordActions() {
+        document.querySelectorAll(".btn-approve").forEach((btn) => btn.addEventListener("click", (e) => openApprovalModal(e.currentTarget.dataset.id)));
+        document.querySelectorAll(".btn-reedit").forEach((btn) => btn.addEventListener("click", (e) => openReEditMode(e.currentTarget.dataset.id)));
+        document.querySelectorAll(".btn-history").forEach((btn) => btn.addEventListener("click", (e) => openApprovalHistory(e.currentTarget.dataset.id)));
+        document.querySelectorAll(".btn-delete").forEach((btn) => btn.addEventListener("click", (e) => { pendingDeleteId = e.currentTarget.dataset.id; openModal(confirmModal); }));
+        document.querySelectorAll(".btn-toggle-collapse").forEach((btn) => btn.addEventListener("click", (e) => {
+          const id = e.currentTarget.dataset.id;
+          toggleRecordCollapse(id);
+          renderRecords();
+        }));
+        document.querySelectorAll(".btn-export-card").forEach((btn) => btn.addEventListener("click", (e) => exportSingleRecordCard(e.currentTarget.dataset.id)));
       }
 
       async function renderRecords() {
@@ -1573,73 +1857,91 @@
         const filtered = filterRecords(records);
         renderStats(filtered);
         renderList(filtered);
+        updatePendingBadge(records);
       }
+
 
       // Form
       function validateForm() {
         const requiredIds = ["production-status", "factory-name", "material-name", "material-batch"];
         let firstInvalid = null;
         let valid = true;
-
         requiredIds.forEach((id) => {
           const el = document.getElementById(id);
-          if (!el.value.trim()) {
-            valid = false;
-            el.style.borderColor = "var(--error)";
-            if (!firstInvalid) firstInvalid = el;
-          } else {
-            el.style.borderColor = "";
-          }
+          if (!el.value.trim()) { valid = false; el.style.borderColor = "var(--error)"; if (!firstInvalid) firstInvalid = el; }
+          else { el.style.borderColor = ""; }
         });
-
-        if (firstInvalid) {
-          firstInvalid.focus();
-        }
-
+        if (firstInvalid) firstInvalid.focus();
         return valid;
       }
-
       function clearValidationStyles() {
-        form.querySelectorAll(".form-control, .form-select, .form-textarea").forEach((el) => {
-          el.style.borderColor = "";
-        });
+        form.querySelectorAll(".form-control, .form-select, .form-textarea").forEach((el) => { el.style.borderColor = ""; });
       }
-
       function resetForm() {
         form.reset();
         clearValidationStyles();
+        reeditRecordId = null;
+        btnSubmit.textContent = "提交登记";
+        btnCancelEdit.classList.add("hidden");
         document.getElementById("production-status").focus();
+      }
+      function fillFormFromRecord(record) {
+        document.getElementById("production-status").value = record.productionStatus || "";
+        document.getElementById("seal-status").value = record.sealStatus || "未封样";
+        document.getElementById("factory-name").value = record.factoryName || "";
+        document.getElementById("seal-code").value = record.sealCode || "";
+        document.getElementById("material-name").value = record.materialName || "";
+        document.getElementById("material-batch").value = record.materialBatch || "";
+        document.getElementById("material-params").value = record.materialParams || "";
+        document.getElementById("material-effect").value = record.materialEffect || "";
+        document.getElementById("remarks").value = record.remarks || "";
+      }
+      function readFormData() {
+        const formData = new FormData(form);
+        return {
+          productionStatus: (formData.get("productionStatus") || "").trim(),
+          sealStatus: (formData.get("sealStatus") || "").trim() || "未封样",
+          factoryName: (formData.get("factoryName") || "").trim(),
+          sealCode: (formData.get("sealCode") || "").trim(),
+          materialName: (formData.get("materialName") || "").trim(),
+          materialBatch: (formData.get("materialBatch") || "").trim(),
+          materialParams: (formData.get("materialParams") || "").trim(),
+          materialEffect: (formData.get("materialEffect") || "").trim(),
+          remarks: (formData.get("remarks") || "").trim()
+        };
       }
 
       async function handleSubmit(e) {
         e.preventDefault();
         clearValidationStyles();
-
-        if (!validateForm()) {
-          showToast("请填写所有必填项", "error");
-          return;
+        if (!validateForm()) { showToast("请填写所有必填项", "error"); return; }
+        const data = readFormData();
+        if (reeditRecordId) {
+          const success = await updateRecordInCloud(reeditRecordId, Object.assign({}, data, { approvalStatus: APPROVAL_STATUS.PENDING }));
+          if (!success) return;
+          resetForm();
+          await renderRecords();
+          showToast("重新提交成功，等待审批", "success");
+        } else {
+          const newRecord = Object.assign({ id: generateId(), createdAt: Date.now() }, data);
+          const saved = await saveRecordToCloud(newRecord);
+          if (!saved) return;
+          resetForm();
+          await renderRecords();
+          showToast("登记成功，已提交审批", "success");
         }
+      }
 
-        const formData = new FormData(form);
-        const newRecord = {
-          id: generateId(),
-          productionStatus: formData.get("productionStatus").trim(),
-          sealStatus: formData.get("sealStatus").trim() || "未封样",
-          factoryName: formData.get("factoryName").trim(),
-          sealCode: formData.get("sealCode").trim(),
-          materialName: formData.get("materialName").trim(),
-          materialBatch: formData.get("materialBatch").trim(),
-          materialParams: formData.get("materialParams").trim(),
-          materialEffect: formData.get("materialEffect").trim(),
-          remarks: formData.get("remarks").trim(),
-          createdAt: Date.now()
-        };
-
-        const saved = await saveRecordToCloud(newRecord);
-        if (!saved) return;
-        await renderRecords();
-        resetForm();
-        showToast("登记成功", "success");
+      async function openReEditMode(recordId) {
+        const records = await loadRecordsFromCloud();
+        const record = records.find((r) => r.id === recordId);
+        if (!record) return;
+        reeditRecordId = recordId;
+        fillFormFromRecord(record);
+        btnSubmit.textContent = "重新提交";
+        btnCancelEdit.classList.remove("hidden");
+        document.getElementById("form-section").scrollIntoView({ behavior: "smooth" });
+        showToast("已加载原数据，修改后重新提交", "success");
       }
 
       async function deleteRecord(id) {
@@ -1649,127 +1951,257 @@
         showToast("删除成功", "success");
       }
 
-      // Modals
-      function openModal(modalEl) {
-        modalEl.classList.add("show");
+      // Approval flow
+      async function openApprovalModal(recordId) {
+        const records = await loadRecordsFromCloud();
+        const record = records.find((r) => r.id === recordId);
+        if (!record) return;
+        currentApprovalRecord = record;
+        renderApprovalPreview(record);
+        approvalComment.value = "";
+        approvalEditSection.classList.add("hidden");
+        approvalEditGrid.innerHTML = "";
+        renderApprovalEditForm(record);
+        openModal(approvalModal);
       }
 
-      function closeModal(modalEl) {
-        modalEl.classList.remove("show");
+      function renderApprovalPreview(record) {
+        const ps = productionStatusMap[record.productionStatus] || { label: record.productionStatus };
+        const as = approvalStatusMap[record.approvalStatus] || { label: record.approvalStatus };
+        approvalRecordPreview.innerHTML =
+          '<h4>品控记录详情</h4>' +
+          '<div class="record-info-row"><span class="record-info-label">材料名称：</span><span>' + escapeHtml(record.materialName) + '</span></div>' +
+          '<div class="record-info-row"><span class="record-info-label">生产状态：</span><span>' + escapeHtml(ps.label) + '</span></div>' +
+          '<div class="record-info-row"><span class="record-info-label">封样状态：</span><span>' + escapeHtml(record.sealStatus) + '</span></div>' +
+          '<div class="record-info-row"><span class="record-info-label">工厂：</span><span>' + escapeHtml(record.factoryName) + '</span></div>' +
+          '<div class="record-info-row"><span class="record-info-label">封样编号：</span><span>' + escapeHtml(record.sealCode) + '</span></div>' +
+          '<div class="record-info-row"><span class="record-info-label">材料批次：</span><span>' + escapeHtml(record.materialBatch) + '</span></div>' +
+          '<div class="record-info-row"><span class="record-info-label">材料参数：</span><span>' + escapeHtml(record.materialParams) + '</span></div>' +
+          '<div class="record-info-row"><span class="record-info-label">材料效果：</span><span>' + escapeHtml(record.materialEffect) + '</span></div>' +
+          '<div class="record-info-row"><span class="record-info-label">备注：</span><span>' + escapeHtml(record.remarks) + '</span></div>' +
+          '<div class="record-info-row"><span class="record-info-label">提交人：</span><span>' + escapeHtml(record.submittedBy) + '</span></div>' +
+          '<div class="record-info-row"><span class="record-info-label">当前状态：</span><span>' + escapeHtml(as.label) + '</span></div>';
       }
 
-      // Toast
-      function showToast(message, type) {
-        const toast = document.createElement("div");
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
-        toastContainer.appendChild(toast);
-
-        requestAnimationFrame(() => {
-          toast.classList.add("show");
+      function renderApprovalEditForm(record) {
+        approvalEditGrid.innerHTML = "";
+        EDITABLE_FIELDS.forEach((f) => {
+          const wrap = document.createElement("div");
+          wrap.className = "form-group";
+          let inputHtml = "";
+          const val = record[f.key] || "";
+          if (f.type === "select") {
+            inputHtml = '<select class="form-select" data-field="' + f.key + '">';
+            f.options.forEach((opt) => { inputHtml += '<option value="' + opt + '"' + (opt === val ? " selected" : "") + '>' + opt + '</option>'; });
+            inputHtml += "</select>";
+          } else if (f.type === "textarea") {
+            inputHtml = '<textarea class="form-textarea" data-field="' + f.key + '" placeholder="请输入' + f.label + '">' + escapeHtml(val) + '</textarea>';
+          } else {
+            inputHtml = '<input type="text" class="form-control" data-field="' + f.key + '" value="' + escapeHtml(val) + '" placeholder="请输入' + f.label + '" />';
+          }
+          wrap.innerHTML = '<label class="form-label">' + f.label + '</label>' + inputHtml;
+          approvalEditGrid.appendChild(wrap);
         });
+      }
 
+      function readApprovalEditForm() {
+        const updates = {};
+        approvalEditGrid.querySelectorAll("[data-field]").forEach((el) => { updates[el.dataset.field] = el.value.trim(); });
+        return updates;
+      }
+
+      function closeApprovalModal() { closeModal(approvalModal); currentApprovalRecord = null; }
+
+      async function handleApprovePass() {
+        if (!currentApprovalRecord) return;
+        const comment = approvalComment.value.trim();
+        const ok = await updateRecordInCloud(currentApprovalRecord.id, { approvalStatus: APPROVAL_STATUS.APPROVED });
+        if (!ok) return;
+        await saveApprovalLog(currentApprovalRecord.id, "approve", comment, null, null);
+        closeApprovalModal();
+        await renderRecords();
+        showToast("已通过审批", "success");
+      }
+
+      async function handleApproveReject() {
+        if (!currentApprovalRecord) return;
+        const comment = approvalComment.value.trim();
+        const ok = await updateRecordInCloud(currentApprovalRecord.id, { approvalStatus: APPROVAL_STATUS.REJECTED });
+        if (!ok) return;
+        await saveApprovalLog(currentApprovalRecord.id, "reject", comment, null, null);
+        closeApprovalModal();
+        await renderRecords();
+        showToast("已驳回", "success");
+      }
+
+      async function handleApproveModify() {
+        if (!currentApprovalRecord) return;
+        const updates = readApprovalEditForm();
+        const original = {};
+        Object.keys(updates).forEach((k) => { original[k] = currentApprovalRecord[k] || ""; });
+        const comment = approvalComment.value.trim();
+        const ok = await updateRecordInCloud(currentApprovalRecord.id, Object.assign({}, updates, { approvalStatus: APPROVAL_STATUS.MODIFIED_APPROVED }));
+        if (!ok) return;
+        await saveApprovalLog(currentApprovalRecord.id, "modify_approve", comment, original, updates);
+        closeApprovalModal();
+        await renderRecords();
+        showToast("修改后已通过", "success");
+      }
+
+
+      async function openApprovalHistory(recordId) {
+        const history = await loadApprovalHistory(recordId);
+        if (history.length === 0) {
+          approvalHistoryContent.innerHTML = '<div class="modal-body">暂无审批记录</div>';
+        } else {
+          const actionLabels = { approve: "通过", reject: "驳回", modify_approve: "修改后通过" };
+          const actionClasses = { approve: "approve", reject: "reject", modify_approve: "modify" };
+          approvalHistoryContent.innerHTML = '<div class="approval-timeline">' + history.map((h) => {
+            const a = h.action || "";
+            const label = actionLabels[a] || a;
+            const cls = actionClasses[a] || "";
+            let diff = "";
+            if (a === "modify_approve" && h.original_data && h.modified_data) {
+              const fieldLabels = { productionStatus: "生产状态", sealStatus: "封样状态", factoryName: "工厂名称", sealCode: "封样编号", materialName: "材料名称", materialBatch: "材料批次", materialParams: "材料参数", materialEffect: "材料效果", remarks: "备注" };
+              const rows = Object.keys(fieldLabels).filter((k) => (h.original_data[k] || "") !== (h.modified_data[k] || "")).map((k) =>
+                '<tr><td>' + escapeHtml(fieldLabels[k]) + '</td><td class="diff-old">' + escapeHtml(h.original_data[k] || "空") + '</td><td class="diff-new">' + escapeHtml(h.modified_data[k] || "空") + '</td></tr>'
+              ).join("");
+              if (rows) diff = '<table class="diff-table"><thead><tr><th>字段</th><th>修改前</th><th>修改后</th></tr></thead><tbody>' + rows + '</tbody></table>';
+            }
+            return '<div class="timeline-item ' + cls + '"><div class="timeline-header"><span class="timeline-action">' + escapeHtml(label) + '</span><span class="timeline-time">' + formatDate(h.created_at) + '</span></div><div class="timeline-meta">操作人：' + escapeHtml(h.approver) + '</div>' + (h.comment ? '<div class="timeline-comment">' + escapeHtml(h.comment) + '</div>' : "") + diff + '</div>';
+          }).join("") + '</div>';
+        }
+        openModal(approvalHistoryModal);
+      }
+
+      function openModal(m) { m.classList.add("show"); }
+      function closeModal(m) { m.classList.remove("show"); }
+
+      function showToast(message, type) {
+        const t = document.createElement("div");
+        t.className = "toast toast-" + type;
+        t.textContent = message;
+        toastContainer.appendChild(t);
+        requestAnimationFrame(() => t.classList.add("show"));
         setTimeout(() => {
-          toast.classList.remove("show");
-          toast.addEventListener("transitionend", () => {
-            toast.remove();
-          });
+          t.classList.remove("show");
+          t.addEventListener("transitionend", () => t.remove());
         }, 2500);
       }
 
-      // Export Excel (SpreadsheetML)
-      function generateSpreadsheetML(records) {
-        const headers = FIELD_DEFS.map((f) => f.label);
-        const keys = FIELD_DEFS.map((f) => f.key);
-
-        const headerRow = keys
-          .map((_, idx) => `<Cell ss:StyleID="Header"><Data ss:Type="String">${escapeXml(headers[idx])}</Data></Cell>`)
-          .join("");
-
-        const dataRows = records
-          .map((r) => {
-            return `<Row>${keys
-              .map((key) => {
-                let value = r[key];
-                let type = "String";
-                if (key === "createdAt") {
-                  value = formatDate(value);
-                }
-                return `<Cell><Data ss:Type="${type}">${escapeXml(value)}</Data></Cell>`;
-              })
-              .join("")}</Row>`;
-          })
-          .join("");
-
-        const columns = keys.map(() => `<Column ss:Width="120" />`).join("");
-
-        return `<?xml version="1.0" encoding="UTF-8"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
-  xmlns:o="urn:schemas-microsoft-com:office:office"
-  xmlns:x="urn:schemas-microsoft-com:office:excel"
-  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
-  <Styles>
-    <Style ss:ID="Header">
-      <Interior ss:Color="#003894" ss:Pattern="Solid"/>
-      <Font ss:Color="#FFFFFF" ss:Bold="1"/>
-      <Alignment ss:Horizontal="Center"/>
-    </Style>
-  </Styles>
-  <Worksheet ss:Name="品控记录">
-    <Table>
-      ${columns}
-      <Row>${headerRow}</Row>
-      ${dataRows}
-    </Table>
-  </Worksheet>
-</Workbook>`;
+      function generateCSV(records) {
+        const escapeCsv = (v) => {
+          if (v == null) return "";
+          const s = String(v);
+          if (s.includes(",") || s.includes("\"") || s.includes("\n") || s.includes("\r")) return "\"" + s.replace(/"/g, "\"\"") + "\"";
+          return s;
+        };
+        const headers = ["审批状态", "提交人", "提交时间", "生产状态", "封样状态", "工厂", "封样编号", "材料名称", "材料批次", "材料参数", "材料效果", "备注", "创建时间"];
+        const rows = records.map((r) => [
+          (approvalStatusMap[r.approvalStatus] || {}).label || r.approvalStatus,
+          r.submittedBy, formatDate(r.submittedAt), r.productionStatus, r.sealStatus, r.factoryName, r.sealCode, r.materialName, r.materialBatch, r.materialParams, r.materialEffect, r.remarks, formatDate(r.createdAt)
+        ].map(escapeCsv).join(","));
+        return "﻿" + [headers.join(","), ...rows].join("\n");
       }
 
       function downloadFile(content, filename, mimeType) {
         const blob = new Blob([content], { type: mimeType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
 
       async function exportToExcel() {
         const records = filterRecords(await loadRecordsFromCloud());
-        if (records.length === 0) {
-          showToast("没有可导出的记录", "error");
-          return;
-        }
-        const xml = generateSpreadsheetML(records);
+        if (records.length === 0) { showToast("没有可导出的记录", "error"); return; }
+        const csv = generateCSV(records);
         const dateStr = new Date().toISOString().slice(0, 10);
-        downloadFile(xml, `品控记录_${dateStr}.xls`, "application/vnd.ms-excel");
+        downloadFile(csv, "品控记录_" + dateStr + ".csv", "text/csv;charset=utf-8;");
         showToast("导出成功", "success");
       }
 
-      // Field settings
+      function buildSingleRecordHTML(record) {
+        const ps = productionStatusMap[record.productionStatus] || { label: record.productionStatus };
+        const as = approvalStatusMap[record.approvalStatus] || { label: record.approvalStatus };
+        return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8" /><title>品控单据 - ${escapeHtml(record.materialName || "")}</title>
+<style>
+body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f4f6f9; padding: 24px; margin: 0; }
+.card { max-width: 720px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; }
+.header { background: linear-gradient(135deg, #003894 0%, #00B0AF 100%); color: #fff; padding: 24px 32px; }
+.header h1 { margin: 0; font-size: 22px; }
+.header p { margin: 6px 0 0; font-size: 13px; opacity: 0.9; }
+.body { padding: 24px 32px; }
+.row { display: flex; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+.row:last-child { border-bottom: none; }
+.label { width: 120px; color: #6b7280; font-size: 14px; }
+.value { flex: 1; color: #1f2937; font-size: 14px; word-break: break-all; }
+.tags { display: flex; gap: 8px; margin-top: 12px; }
+.tag { padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.tag-pending { background: #fef3c7; color: #92400e; }
+.tag-approved { background: #d1fae5; color: #065f46; }
+.tag-rejected { background: #fee2e2; color: #991b1b; }
+.tag-modified { background: #ede9fe; color: #5b21b6; }
+.footer { padding: 16px 32px; background: #f9fafb; color: #6b7280; font-size: 12px; text-align: center; }
+.slogan { text-align: center; padding: 16px; color: #6b7280; font-size: 14px; letter-spacing: 3px; }
+</style></head><body>
+<div class="card">
+  <div class="header">
+    <h1>OEM 品控单据</h1>
+    <p>远程质量管控 · 生产追溯</p>
+    <div class="tags">
+      <span class="tag tag-${as.class.replace("approval-", "")}">${escapeHtml(as.label)}</span>
+      <span class="tag" style="background:#dbeafe;color:#1e40af;">${escapeHtml(ps.label)}</span>
+    </div>
+  </div>
+  <div class="body">
+    <div class="row"><div class="label">材料名称</div><div class="value">${escapeHtml(record.materialName || "-")}</div></div>
+    <div class="row"><div class="label">工厂名称</div><div class="value">${escapeHtml(record.factoryName || "-")}</div></div>
+    <div class="row"><div class="label">封样编号</div><div class="value">${escapeHtml(record.sealCode || "-")}</div></div>
+    <div class="row"><div class="label">封样状态</div><div class="value">${escapeHtml(record.sealStatus || "-")}</div></div>
+    <div class="row"><div class="label">材料批次</div><div class="value">${escapeHtml(record.materialBatch || "-")}</div></div>
+    <div class="row"><div class="label">材料参数</div><div class="value">${escapeHtml(record.materialParams || "-")}</div></div>
+    <div class="row"><div class="label">材料效果</div><div class="value">${escapeHtml(record.materialEffect || "-")}</div></div>
+    <div class="row"><div class="label">备注</div><div class="value">${escapeHtml(record.remarks || "-")}</div></div>
+    <div class="row"><div class="label">提交人</div><div class="value">${escapeHtml(record.submittedBy || "-")}</div></div>
+    <div class="row"><div class="label">提交时间</div><div class="value">${formatDate(record.submittedAt)}</div></div>
+    <div class="row"><div class="label">创建时间</div><div class="value">${formatDate(record.createdAt)}</div></div>
+  </div>
+  <div class="footer">单据导出时间：${formatDate(Date.now())}</div>
+</div>
+<div class="slogan"><strong style="color:#003894;">善待你一生</strong> · LONGFOR 龙湖</div>
+</body></html>`;
+      }
+
+      async function exportSingleRecordCard(recordId) {
+        const records = await loadRecordsFromCloud();
+        const record = records.find((r) => r.id === recordId);
+        if (!record) { showToast("记录不存在", "error"); return; }
+        const html = buildSingleRecordHTML(record);
+        const blob = new Blob([html], { type: "text/html;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "品控单据_" + (record.materialName || record.id) + ".html";
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast("单据已导出", "success");
+      }
+
       function renderFieldSettingsModal() {
         const prefs = loadFieldPrefs();
         fieldSettingsGrid.innerHTML = "";
         FIELD_DEFS.forEach((f) => {
           const label = document.createElement("label");
           label.className = "field-option";
-          label.innerHTML = `
-            <input type="checkbox" value="${f.key}" ${prefs[f.key] ? "checked" : ""} />
-            <span>${escapeHtml(f.label)}</span>
-          `;
+          label.innerHTML = '<input type="checkbox" value="' + f.key + '"' + (prefs[f.key] ? " checked" : "") + ' /><span>' + escapeHtml(f.label) + '</span>';
           fieldSettingsGrid.appendChild(label);
         });
       }
-
       function saveFieldSettings() {
         const prefs = {};
-        fieldSettingsGrid.querySelectorAll("input[type='checkbox']").forEach((cb) => {
-          prefs[cb.value] = cb.checked;
-        });
+        fieldSettingsGrid.querySelectorAll("input[type='checkbox']").forEach((cb) => { prefs[cb.value] = cb.checked; });
         saveFieldPrefs(prefs);
         renderRecords();
         closeModal(fieldSettingsModal);
@@ -1784,15 +2216,12 @@
         const result = login(username, password);
         if (result.success) {
           const ready = initSupabase();
-          if (!ready) {
-            loginError.textContent = "云服务连接失败，请稍后重试";
-            return;
-          }
+          if (!ready) { loginError.textContent = "云服务连接失败，请稍后重试"; return; }
           showMainApp();
           applyRoleUI();
           await renderRecords();
           const displayName = result.role === "admin" ? "操作员" : "管理员";
-          showToast(`欢迎，${displayName}`, "success");
+          showToast("欢迎，" + displayName, "success");
         } else {
           loginError.textContent = result.message;
           loginPassword.value = "";
@@ -1801,75 +2230,71 @@
       });
 
       btnLogout.addEventListener("click", logout);
-
       form.addEventListener("submit", handleSubmit);
-
-      btnReset.addEventListener("click", () => {
-        resetForm();
-        showToast("表单已清空", "success");
-      });
-
-      btnCancelDelete.addEventListener("click", () => {
-        closeModal(confirmModal);
-        pendingDeleteId = null;
-      });
-
+      btnReset.addEventListener("click", () => { resetForm(); showToast("表单已清空", "success"); });
+      btnCancelEdit.addEventListener("click", () => { resetForm(); showToast("已取消重新编辑", "success"); });
+      btnCancelDelete.addEventListener("click", () => { closeModal(confirmModal); pendingDeleteId = null; });
       btnConfirmDelete.addEventListener("click", async () => {
-        if (pendingDeleteId) {
-          await deleteRecord(pendingDeleteId);
-        }
+        if (pendingDeleteId) await deleteRecord(pendingDeleteId);
         closeModal(confirmModal);
         pendingDeleteId = null;
       });
-
-      confirmModal.addEventListener("click", (e) => {
-        if (e.target === confirmModal) closeModal(confirmModal);
-      });
-
+      confirmModal.addEventListener("click", (e) => { if (e.target === confirmModal) closeModal(confirmModal); });
       btnExport.addEventListener("click", exportToExcel);
-
-      btnFieldSettings.addEventListener("click", () => {
-        renderFieldSettingsModal();
-        openModal(fieldSettingsModal);
-      });
-
-      btnCancelFieldSettings.addEventListener("click", () => {
-        closeModal(fieldSettingsModal);
-      });
-
+      btnFieldSettings.addEventListener("click", () => { renderFieldSettingsModal(); openModal(fieldSettingsModal); });
+      btnCancelFieldSettings.addEventListener("click", () => closeModal(fieldSettingsModal));
       btnSaveFieldSettings.addEventListener("click", saveFieldSettings);
+      fieldSettingsModal.addEventListener("click", (e) => { if (e.target === fieldSettingsModal) closeModal(fieldSettingsModal); });
 
-      fieldSettingsModal.addEventListener("click", (e) => {
-        if (e.target === fieldSettingsModal) closeModal(fieldSettingsModal);
+      function jumpToPending() {
+        filterApprovalStatus.value = APPROVAL_STATUS.PENDING;
+        filters.approvalStatus = APPROVAL_STATUS.PENDING;
+        applyFilters();
+        document.getElementById("list-title").scrollIntoView({ behavior: "smooth" });
+      }
+
+      function updatePendingCardActive() {
+        const card = document.getElementById("stat-card-pending");
+        if (!card) return;
+        if (filters.approvalStatus === APPROVAL_STATUS.PENDING) {
+          card.classList.add("active");
+        } else {
+          card.classList.remove("active");
+        }
+      }
+
+      btnPendingList.addEventListener("click", jumpToPending);
+      const statCardPending = document.getElementById("stat-card-pending");
+      if (statCardPending) statCardPending.addEventListener("click", jumpToPending);
+
+      filterApprovalStatus.addEventListener("change", (e) => {
+        filters.approvalStatus = e.target.value;
+        applyFilters();
+        updatePendingCardActive();
       });
+
+      btnApprovalCancel.addEventListener("click", closeApprovalModal);
+      btnApprovalPass.addEventListener("click", handleApprovePass);
+      btnApprovalReject.addEventListener("click", handleApproveReject);
+      btnApprovalModify.addEventListener("click", handleApproveModify);
+      approvalModal.addEventListener("click", (e) => { if (e.target === approvalModal) closeApprovalModal(); });
+
+      btnCloseHistory.addEventListener("click", () => closeModal(approvalHistoryModal));
+      approvalHistoryModal.addEventListener("click", (e) => { if (e.target === approvalHistoryModal) closeModal(approvalHistoryModal); });
 
       document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
           if (confirmModal.classList.contains("show")) closeModal(confirmModal);
           if (fieldSettingsModal.classList.contains("show")) closeModal(fieldSettingsModal);
+          if (approvalModal.classList.contains("show")) closeApprovalModal();
+          if (approvalHistoryModal.classList.contains("show")) closeModal(approvalHistoryModal);
         }
       });
 
-      // Filters events
-      searchInput.addEventListener(
-        "input",
-        debounce((e) => {
-          filters.keyword = e.target.value;
-          applyFilters();
-        }, 250)
-      );
+      searchInput.addEventListener("input", debounce((e) => { filters.keyword = e.target.value; applyFilters(); updatePendingCardActive(); }, 250));
+      filterProductionStatus.addEventListener("change", (e) => { filters.productionStatus = e.target.value; applyFilters(); });
+      filterSealStatus.addEventListener("change", (e) => { filters.sealStatus = e.target.value; applyFilters(); });
 
-      filterProductionStatus.addEventListener("change", (e) => {
-        filters.productionStatus = e.target.value;
-        applyFilters();
-      });
-
-      filterSealStatus.addEventListener("change", (e) => {
-        filters.sealStatus = e.target.value;
-        applyFilters();
-      });
-
-      // Init
       initAuth();
     })();
   </script>
