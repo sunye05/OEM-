@@ -1953,7 +1953,8 @@
               actions.push('<button type="button" class="btn btn-secondary btn-sm btn-withdraw" data-id="' + record.id + '">撤回审批</button>');
               actions.push('<button type="button" class="btn btn-danger btn-sm btn-delete" data-id="' + record.id + '">删除</button>');
             } else if (record.approvalStatus === APPROVAL_STATUS.REJECTED || record.approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED || record.approvalStatus === APPROVAL_STATUS.WITHDRAWN) {
-              actions.push('<button type="button" class="btn btn-warning btn-sm btn-reedit" data-id="' + record.id + '">重新编辑</button>');
+              actions.push('<button type="button" class="btn btn-warning btn-sm btn-reedit" data-id="' + record.id + '">继续编辑</button>');
+              actions.push('<button type="button" class="btn btn-secondary btn-sm btn-submit" data-id="' + record.id + '">提交审批</button>');
             }
             if (record.approvalStatus === APPROVAL_STATUS.APPROVED || record.approvalStatus === APPROVAL_STATUS.MODIFIED_APPROVED || record.approvalStatus === APPROVAL_STATUS.REJECTED) {
               actions.push('<button type="button" class="btn btn-secondary btn-sm btn-export-card" data-id="' + record.id + '">导出单据</button>');
