@@ -1010,7 +1010,10 @@
           const orderNo = currentOrderDraft.order_no;
           const stageName = currentOrderDraft.current_stage;
           const existing = (currentOrderDraft.stages || []).find((s) => s.stage_name === stageName);
-          if (!existing) { showToast("阶段不存在", "error"); return; }
+          if (!existing) {
+            showToast("阶段记录不存在，请刷新重试", "error");
+            return;
+          }
           const stageRecord = {
             id: existing.id,
             order_no: orderNo,
@@ -1288,6 +1291,22 @@
           // 推进到下一阶段
           const next = getNextStage(stage.stage_name, order.project_type);
           if (next) {
+            // 主动创建下一阶段的空记录，避免操作员提交时找不到
+            const nextStageExists = (order.stages || []).find((s) => s.stage_name === next.key);
+            if (!nextStageExists) {
+              await saveStageInCloud({
+                id: generateId(),
+                order_no: order.order_no,
+                stage_name: next.key,
+                stage_order: next.order,
+                stage_data: {},
+                attachments: [],
+                approval_status: "draft",
+                submitted_by: currentUser.username,
+                submitted_at: null,
+                created_at: Date.now()
+              });
+            }
             await updateOrderInCloud(order.order_no, {
               current_stage: next.key,
               stages_completed: (order.stages_completed || "") + stage.stage_name + ","
