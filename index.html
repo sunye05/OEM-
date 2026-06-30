@@ -1009,10 +1009,23 @@
           // 编辑现有阶段
           const orderNo = currentOrderDraft.order_no;
           const stageName = currentOrderDraft.current_stage;
-          const existing = (currentOrderDraft.stages || []).find((s) => s.stage_name === stageName);
+          let existing = (currentOrderDraft.stages || []).find((s) => s.stage_name === stageName);
           if (!existing) {
-            showToast("阶段记录不存在，请刷新重试", "error");
-            return;
+            // 兜底：阶段记录不存在则自动创建一条
+            const stageDef = STAGES[stageName];
+            existing = {
+              id: generateId(),
+              order_no: orderNo,
+              stage_name: stageName,
+              stage_order: stageDef ? stageDef.order : 1,
+              stage_data: {},
+              attachments: [],
+              approval_status: "draft",
+              submitted_by: currentUser.username,
+              submitted_at: null,
+              created_at: Date.now()
+            };
+            await saveStageInCloud(existing);
           }
           const stageRecord = {
             id: existing.id,
