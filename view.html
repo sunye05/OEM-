@@ -38,7 +38,8 @@
     .file-link:hover { background: #bfdbfe; }
     .footer-bar { padding: 18px 36px; background: #003894; color: #fff; font-size: 12px; text-align: center; letter-spacing: 2px; }
     .footer-bar strong { color: #00B0AF; font-weight: 700; }
-    .slogan { display: none; }
+    .slogan { text-align: center; padding: 16px; color: #6b7280; font-size: 14px; letter-spacing: 3px; }
+    .slogan strong { color: #003894; }
     .empty { text-align: center; padding: 60px 20px; color: #6b7280; }
     .loading { text-align: center; padding: 40px; color: #003894; }
     .image-preview { max-width: 200px; max-height: 200px; border-radius: 6px; margin-top: 6px; }
@@ -49,6 +50,7 @@
     <div class="card" id="main-card">
       <div class="loading">加载中...</div>
     </div>
+    <div class="slogan"><strong>善待你一生</strong> · LONGFOR 龙湖</div>
   </div>
   <script>
     (function () {
@@ -115,7 +117,6 @@
       function fileLink(f) {
         if (!f || !f.url) return "";
         const name = f.name || "文件";
-        const lower = name.toLowerCase();
         const isImg = (f.type || "").startsWith("image/") || /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
         const isPdf = /\.pdf$/i.test(name);
         if (isImg) {
@@ -124,8 +125,9 @@
         if (isPdf) {
           return '<a class="file-link" href="' + escapeHtml(f.url) + '" target="_blank">📄 ' + escapeHtml(name) + '（PDF 在线预览）</a>';
         }
-        // Excel/Word/其他：触发下载
-        return '<a class="file-link" href="' + escapeHtml(f.url) + '" download="' + escapeHtml(name) + '" target="_blank">📎 ' + escapeHtml(name) + '（点击下载）</a>';
+        // Excel/Word/其他：提示用户使用 Office Online 预览或下载
+        const officeUrl = 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(f.url);
+        return '<a class="file-link" href="' + escapeHtml(officeUrl) + '" target="_blank">📊 ' + escapeHtml(name) + '（点击在线预览/下载）</a>';
       }
 
       function render(order, stages, history) {
@@ -252,7 +254,7 @@
         }
 
         html += '</div>';
-        html += '<div class="footer-bar">单据生成时间：' + formatDate(Date.now()) + ' | <strong>LONGFOR 龙湖 · 善待你一生</strong></div>';
+        html += '<div class="footer-bar">单据生成时间：' + formatDate(Date.now()) + '</div>';
 
         document.getElementById("main-card").innerHTML = html;
       }
