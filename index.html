@@ -957,7 +957,6 @@
         const isValid = action === "save_draft" ? true : validateFormData(data, stage.key);
         if (!isValid) return;
 
-        const isNew = !currentOrderDraft || !currentOrderDraft.order_no;
         if (isNew) {
           // 创建新单据
           if (!data.project_type) { showToast("请选择项目类型", "error"); return; }
