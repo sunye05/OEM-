@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>品控单据详情 - 龙湖 OEM 品控云台</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, "Microsoft YaHei", sans-serif; background: #eef3fb; padding: 20px; min-height: 100vh; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .brand-bar { background: #003894; color: #fff; padding: 24px 32px; text-align: center; border-radius: 16px 16px 0 0; box-shadow: 0 8px 24px rgba(0, 56, 148, 0.18); }
+    .brand-bar h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+    .brand-bar p { font-size: 13px; opacity: 0.9; letter-spacing: 4px; }
+    .card { background: #fff; border-radius: 0 0 16px 16px; box-shadow: 0 8px 24px rgba(0, 56, 148, 0.18); overflow: hidden; }
+    .banner { background: linear-gradient(135deg, #003894 0%, #0050b0 50%, #00B0AF 100%); color: #fff; padding: 28px 36px; }
+    .banner-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .banner-sub { font-size: 13px; opacity: 0.9; margin-bottom: 14px; }
+    .tags { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tag { padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.4); }
+    .body { padding: 28px 36px; }
+    .section-title { font-size: 15px; font-weight: 700; color: #003894; margin: 24px 0 12px; padding-left: 10px; border-left: 4px solid #00B0AF; }
+    .section-title:first-child { margin-top: 0; }
+    .row { display: flex; padding: 10px 0; border-bottom: 1px dashed #e0e7f0; }
+    .row:last-child { border-bottom: none; }
+    .label { width: 120px; color: #003894; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+    .value { flex: 1; color: #1f2937; font-size: 14px; word-break: break-all; line-height: 1.6; }
+    .stage-block { background: #f9fafb; border-radius: 10px; padding: 18px; margin-bottom: 14px; border-left: 4px solid #00B0AF; }
+    .stage-block.approved { border-left-color: #10b981; }
+    .stage-block.rejected { border-left-color: #ef4444; }
+    .stage-block.pending { border-left-color: #f59e0b; }
+    .stage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .stage-name { font-weight: 700; color: #003894; font-size: 15px; }
+    .stage-status { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .stage-status.approved { background: #d1fae5; color: #065f46; }
+    .stage-status.rejected { background: #fee2e2; color: #991b1b; }
+    .stage-status.pending { background: #fef3c7; color: #92400e; }
+    .file-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .file-link { display: inline-block; padding: 4px 10px; background: #dbeafe; color: #1e40af; border-radius: 6px; font-size: 12px; text-decoration: none; }
+    .file-link:hover { background: #bfdbfe; }
+    .footer-bar { padding: 18px 36px; background: #003894; color: #fff; font-size: 12px; text-align: center; letter-spacing: 2px; }
+    .footer-bar strong { color: #00B0AF; font-weight: 700; }
+    .slogan { text-align: center; padding: 16px; color: #6b7280; font-size: 14px; letter-spacing: 3px; }
+    .slogan strong { color: #003894; }
+    .empty { text-align: center; padding: 60px 20px; color: #6b7280; }
+    .loading { text-align: center; padding: 40px; color: #003894; }
+    .image-preview { max-width: 200px; max-height: 200px; border-radius: 6px; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand-bar">
+      <h1>LONGFOR 龙湖</h1>
+      <p>善待你一生</p>
+    </div>
+    <div class="card" id="main-card">
+      <div class="loading">加载中...</div>
+    </div>
+    <div class="slogan"><strong>善待你一生</strong> · LONGFOR 龙湖</div>
+  </div>
+  <script>
+    (function () {
+      "use strict";
+
+      const SUPABASE_URL = "https://pwojiqrdsoezglwvyxyp.supabase.co";
+      const SUPABASE_KEY = "sb_publishable_zZ6nQJ-2YAMjZXBlVe9dcQ_tejgN1Ce";
+      const SUPABASE_TABLE = "qc_records";
+      const SUPABASE_STAGES_TABLE = "qc_stages";
+      const SUPABASE_APPROVALS_TABLE = "qc_approvals";
+      const STORAGE_BUCKET = "qc-attachments";
+
+      const STAGES = {
+        basic: { name: "基础信息登记" },
+        material_inspection: { name: "原料验收" },
+        first_piece: { name: "首件确认" },
+        second_check: { name: "二次抽检" }
+      };
+
+      const STAGE_LABEL = { pending: "待审批", approved: "已通过", rejected: "已驳回" };
+      const OVERALL_LABEL = { in_progress: "进行中", completed: "已完成", rejected: "已驳回" };
+      const PROJECT_TYPE_LABEL = { domestic: "国内项目", overseas: "海外项目" };
+
+      function escapeHtml(str) {
+        if (str == null) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
+      function formatDate(ts) {
+        if (!ts) return "-";
+        const d = new Date(ts);
+        const p = (n) => String(n).padStart(2, "0");
+        return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+      }
+
+      function getOrderNoFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("order");
+      }
+
+      async function main() {
+        const orderNo = getOrderNoFromUrl();
+        if (!orderNo) {
+          document.getElementById("main-card").innerHTML = '<div class="empty">无效的单据号</div>';
+          return;
+        }
+        try {
+          const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+          const [orderRes, stagesRes, historyRes] = await Promise.all([
+            supabaseClient.from(SUPABASE_TABLE).select("*").eq("order_no", orderNo).single(),
+            supabaseClient.from(SUPABASE_STAGES_TABLE).select("*").eq("order_no", orderNo).order("stage_order"),
+            supabaseClient.from(SUPABASE_APPROVALS_TABLE).select("*").eq("order_no", orderNo).order("created_at", { ascending: true })
+          ]);
+          if (orderRes.error) throw orderRes.error;
+          const order = orderRes.data;
+          const stages = stagesRes.data || [];
+          const history = historyRes.data || [];
+          render(order, stages, history);
+        } catch (e) {
+          console.error(e);
+          document.getElementById("main-card").innerHTML = '<div class="empty">单据不存在或加载失败</div>';
+        }
+      }
+
+      function fileLink(f) {
+        if (!f || !f.url) return "";
+        const name = f.name || "文件";
+        const isImg = (f.type || "").startsWith("image/") || /\.(jpg|jpeg|png)$/i.test(name);
+        const inner = isImg
+          ? '<a href="' + escapeHtml(f.url) + '" target="_blank"><img src="' + escapeHtml(f.url) + '" class="image-preview" /></a>'
+          : '<a class="file-link" href="' + escapeHtml(f.url) + '" target="_blank">📄 ' + escapeHtml(name) + '</a>';
+        return inner;
+      }
+
+      function render(order, stages, history) {
+        const overallStatus = OVERALL_LABEL[order.overall_status] || order.overall_status;
+        const projectType = PROJECT_TYPE_LABEL[order.project_type] || order.project_type;
+        const stagesArr = stages || [];
+
+        const data = (s) => {
+          try { return typeof s.stage_data === "string" ? JSON.parse(s.stage_data) : (s.stage_data || {}); }
+          catch (e) { return {}; }
+        };
+        const attachments = (s) => {
+          try {
+            const a = typeof s.attachments === "string" ? JSON.parse(s.attachments) : (s.attachments || []);
+            return Array.isArray(a) ? a : [];
+          } catch (e) { return []; }
+        };
+
+        let html = '<div class="banner">' +
+          '<div class="banner-title">OEM 品控单据</div>' +
+          '<div class="banner-sub">远程质量管控 · 生产追溯 · 实时品控，全程可溯</div>' +
+          '<div class="tags">' +
+            '<span class="tag">单据号：' + escapeHtml(order.order_no) + '</span>' +
+            '<span class="tag">' + escapeHtml(projectType) + '</span>' +
+            '<span class="tag">整体状态：' + escapeHtml(overallStatus) + '</span>' +
+          '</div>' +
+          '</div>';
+
+        html += '<div class="body">';
+        html += '<div class="section-title">基础信息</div>';
+        html += '<div class="row"><div class="label">单据号</div><div class="value">' + escapeHtml(order.order_no) + '</div></div>';
+        html += '<div class="row"><div class="label">项目类型</div><div class="value">' + escapeHtml(projectType) + '</div></div>';
+        html += '<div class="row"><div class="label">工厂名称</div><div class="value">' + escapeHtml(order.factory_name || "-") + '</div></div>';
+        html += '<div class="row"><div class="label">项目名称</div><div class="value">' + escapeHtml(order.project_name || "-") + '</div></div>';
+        html += '<div class="row"><div class="label">材料名称</div><div class="value">' + escapeHtml(order.material_name || "-") + '</div></div>';
+        html += '<div class="row"><div class="label">材料参数</div><div class="value">' + escapeHtml(order.material_params || "-") + '</div></div>';
+        html += '<div class="row"><div class="label">面层效果</div><div class="value">' + escapeHtml(order.surface_effect || "-") + '</div></div>';
+        html += '<div class="row"><div class="label">批次</div><div class="value">' + escapeHtml(order.batch || "-") + '</div></div>';
+        html += '<div class="row"><div class="label">数量</div><div class="value">' + escapeHtml(order.quantity || "-") + '</div></div>';
+        html += '<div class="row"><div class="label">开始生产时间</div><div class="value">' + escapeHtml(order.production_start_time || "-") + '</div></div>';
+        html += '<div class="row"><div class="label">创建时间</div><div class="value">' + formatDate(order.created_at) + '</div></div>';
+        if (order.seal_photo_url) {
+          html += '<div class="row"><div class="label">封样照片</div><div class="value"><a href="' + escapeHtml(order.seal_photo_url) + '" target="_blank"><img src="' + escapeHtml(order.seal_photo_url) + '" class="image-preview" /></a></div></div>';
+        }
+        if (order.remarks) {
+          html += '<div class="row"><div class="label">备注</div><div class="value">' + escapeHtml(order.remarks) + '</div></div>';
+        }
+
+        html += '<div class="section-title">阶段详情</div>';
+        if (stagesArr.length === 0) {
+          html += '<div style="color:#6b7280;font-size:14px;">暂无阶段数据</div>';
+        }
+        stagesArr.forEach((s) => {
+          const d = data(s);
+          const atts = attachments(s);
+          const status = STAGE_LABEL[s.approval_status] || s.approval_status;
+          html += '<div class="stage-block ' + s.approval_status + '">';
+          html += '<div class="stage-header"><div class="stage-name">' + escapeHtml(STAGES[s.stage_name] ? STAGES[s.stage_name].name : s.stage_name) + '</div><div class="stage-status ' + s.approval_status + '">' + escapeHtml(status) + '</div></div>';
+          if (s.stage_name === "basic") {
+            html += '<div class="row"><div class="label">材料参数</div><div class="value">' + escapeHtml(d.material_params || "-") + '</div></div>';
+            html += '<div class="row"><div class="label">面层效果</div><div class="value">' + escapeHtml(d.surface_effect || "-") + '</div></div>';
+            html += '<div class="row"><div class="label">批次</div><div class="value">' + escapeHtml(d.batch || "-") + '</div></div>';
+            html += '<div class="row"><div class="label">数量</div><div class="value">' + escapeHtml(d.quantity || "-") + '</div></div>';
+            if (d.remarks) html += '<div class="row"><div class="label">备注</div><div class="value">' + escapeHtml(d.remarks) + '</div></div>';
+            if (Array.isArray(d.seal_photo) && d.seal_photo.length > 0) {
+              html += '<div class="row"><div class="label">封样照片</div><div class="value"><div class="file-list">';
+              d.seal_photo.forEach((f) => { html += fileLink(f); });
+              html += '</div></div></div>';
+            }
+          } else if (s.stage_name === "second_check") {
+            html += '<div class="row"><div class="label">前段</div><div class="value">' + escapeHtml(d.front_result || "-") + '</div></div>';
+            html += '<div class="row"><div class="label">中段</div><div class="value">' + escapeHtml(d.middle_result || "-") + '</div></div>';
+            html += '<div class="row"><div class="label">后段</div><div class="value">' + escapeHtml(d.back_result || "-") + '</div></div>';
+            if (Array.isArray(d.front_files) && d.front_files.length > 0) {
+              html += '<div class="row"><div class="label">前段附件</div><div class="value"><div class="file-list">';
+              d.front_files.forEach((f) => { html += fileLink(f); });
+              html += '</div></div></div>';
+            }
+            if (Array.isArray(d.middle_files) && d.middle_files.length > 0) {
+              html += '<div class="row"><div class="label">中段附件</div><div class="value"><div class="file-list">';
+              d.middle_files.forEach((f) => { html += fileLink(f); });
+              html += '</div></div></div>';
+            }
+            if (Array.isArray(d.back_files) && d.back_files.length > 0) {
+              html += '<div class="row"><div class="label">后段附件</div><div class="value"><div class="file-list">';
+              d.back_files.forEach((f) => { html += fileLink(f); });
+              html += '</div></div></div>';
+            }
+            if (d.remarks) html += '<div class="row"><div class="label">备注</div><div class="value">' + escapeHtml(d.remarks) + '</div></div>';
+          } else {
+            html += '<div class="row"><div class="label">检测结果</div><div class="value">' + escapeHtml(d.result_description || "-") + '</div></div>';
+            if (d.remarks) html += '<div class="row"><div class="label">备注</div><div class="value">' + escapeHtml(d.remarks) + '</div></div>';
+          }
+          if (atts.length > 0) {
+            html += '<div class="row"><div class="label">附件</div><div class="value"><div class="file-list">';
+            atts.forEach((f) => { html += fileLink(f); });
+            html += '</div></div></div>';
+          }
+          if (s.submitted_by) {
+            html += '<div class="row"><div class="label">提交人</div><div class="value">' + escapeHtml(s.submitted_by) + '</div></div>';
+            html += '<div class="row"><div class="label">提交时间</div><div class="value">' + formatDate(s.submitted_at) + '</div></div>';
+          }
+          if (s.reviewed_by) {
+            html += '<div class="row"><div class="label">审批人</div><div class="value">' + escapeHtml(s.reviewed_by) + '</div></div>';
+            html += '<div class="row"><div class="label">审批时间</div><div class="value">' + formatDate(s.reviewed_at) + '</div></div>';
+          }
+          if (s.review_comment) {
+            html += '<div class="row"><div class="label">审批意见</div><div class="value">' + escapeHtml(s.review_comment) + '</div></div>';
+          }
+          html += '</div>';
+        });
+
+        if (history.length > 0) {
+          html += '<div class="section-title">审批历史</div>';
+          history.forEach((h) => {
+            const actionLabel = { submit: "提交", approve: "通过", reject: "驳回", modify_approve: "修改后通过", save_draft: "保存草稿" }[h.action] || h.action;
+            const stageName = STAGES[h.stage_name] ? STAGES[h.stage_name].name : h.stage_name;
+            html += '<div class="stage-block">';
+            html += '<div class="stage-header"><div class="stage-name">' + escapeHtml(actionLabel) + ' - ' + escapeHtml(stageName) + '</div><div class="stage-status">' + formatDate(h.created_at) + '</div></div>';
+            html += '<div class="row"><div class="label">操作人</div><div class="value">' + escapeHtml(h.approver || "-") + '</div></div>';
+            if (h.comment) html += '<div class="row"><div class="label">意见</div><div class="value">' + escapeHtml(h.comment) + '</div></div>';
+            html += '</div>';
+          });
+        }
+
+        html += '</div>';
+        html += '<div class="footer-bar">单据生成时间：' + formatDate(Date.now()) + ' | <strong>LONGFOR 龙湖 · 善待你一生</strong></div>';
+
+        document.getElementById("main-card").innerHTML = html;
+      }
+
+      main();
+    })();
+  </script>
+</body>
+</html>

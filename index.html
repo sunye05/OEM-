@@ -189,6 +189,36 @@
     .footer-slogan { text-align: center; padding: 24px; color: var(--text-secondary); font-size: 14px; letter-spacing: 3px; }
     .footer-slogan strong { color: var(--primary-dark); font-weight: 700; }
 
+    /* View modal order detail */
+    .view-banner { background: var(--primary-gradient); color: #fff; padding: 20px 24px; border-radius: 8px; margin-bottom: 16px; }
+    .view-banner-title { font-size: 18px; font-weight: 700; }
+    .view-banner-meta { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+    .view-banner-tags { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .view-tag { padding: 4px 10px; border-radius: 999px; font-size: 12px; background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.4); }
+    .view-section-title { font-size: 14px; font-weight: 700; color: var(--primary-dark); margin: 18px 0 10px; padding-left: 10px; border-left: 4px solid var(--primary-light); }
+    .view-section-title:first-child { margin-top: 0; }
+    .view-row { display: flex; padding: 8px 0; border-bottom: 1px dashed #e0e7f0; font-size: 14px; }
+    .view-row:last-child { border-bottom: none; }
+    .view-label { width: 110px; color: var(--primary-dark); font-weight: 600; flex-shrink: 0; }
+    .view-value { flex: 1; color: var(--text); word-break: break-all; }
+    .view-stage-block { background: #f9fafb; border-radius: 8px; padding: 14px; margin-bottom: 10px; border-left: 4px solid var(--primary-light); }
+    .view-stage-block.approved { border-left-color: var(--success); }
+    .view-stage-block.rejected { border-left-color: var(--error); }
+    .view-stage-block.pending { border-left-color: var(--warning); }
+    .view-stage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .view-stage-name { font-weight: 700; color: var(--primary-dark); }
+    .view-stage-status { padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .view-stage-status.approved { background: #d1fae5; color: #065f46; }
+    .view-stage-status.rejected { background: #fee2e2; color: #991b1b; }
+    .view-stage-status.pending { background: #fef3c7; color: #92400e; }
+    .view-stage-status.draft { background: #f3f4f6; color: #6b7280; }
+    .view-file-link { display: inline-block; padding: 4px 10px; background: #dbeafe; color: #1e40af; border-radius: 6px; font-size: 12px; text-decoration: none; margin: 2px; }
+    .view-file-link:hover { background: #bfdbfe; }
+    .view-img-preview { max-width: 160px; max-height: 160px; border-radius: 6px; margin-top: 6px; }
+    .view-history-item { padding: 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .view-history-item:last-child { border-bottom: none; }
+    .view-history-time { color: var(--text-secondary); font-size: 12px; }
+
     /* Responsive */
     @media (max-width: 1024px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -361,6 +391,17 @@
       <div class="modal-actions">
         <button type="button" class="btn btn-primary btn-sm" id="btn-download-qr">下载二维码</button>
         <button type="button" class="btn btn-secondary btn-sm" id="btn-qr-close">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 单据详情弹窗 -->
+  <div class="modal-overlay" id="view-modal">
+    <div class="modal" style="max-width: 820px;">
+      <div class="modal-title" id="view-modal-title">单据详情</div>
+      <div id="view-modal-content"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-view-close">关闭</button>
       </div>
     </div>
   </div>
@@ -1088,6 +1129,7 @@
         document.getElementById("stat-progress").textContent = allOrders.filter((o) => o.overall_status === "in_progress").length;
         document.getElementById("stat-completed").textContent = allOrders.filter((o) => o.overall_status === "completed").length;
         const pendingCount = allOrders.reduce((sum, o) => {
+          if (o.overall_status === "completed" || o.current_stage === "completed") return sum;
           return sum + (o.stages || []).filter((s) => s.approval_status === "pending").length;
         }, 0);
         document.getElementById("stat-pending").textContent = pendingCount;
@@ -1095,7 +1137,10 @@
 
       function updatePendingBadge(allOrders) {
         if (!isReviewer()) { pendingBadge.classList.add("hidden"); return; }
-        const count = allOrders.reduce((sum, o) => sum + (o.stages || []).filter((s) => s.approval_status === "pending").length, 0);
+        const count = allOrders.reduce((sum, o) => {
+          if (o.overall_status === "completed" || o.current_stage === "completed") return sum;
+          return sum + (o.stages || []).filter((s) => s.approval_status === "pending").length;
+        }, 0);
         if (count > 0) {
           pendingBadge.classList.remove("hidden");
           pendingCountEl.textContent = count > 99 ? "99+" : count;
@@ -1169,9 +1214,11 @@
           if (isReviewer() && currentStageStatus === "pending" && order.overall_status !== "completed") {
             actions.push('<button type="button" class="btn btn-primary btn-sm btn-approve" data-no="' + order.order_no + '">审批</button>');
           }
+          actions.push('<button type="button" class="btn btn-secondary btn-sm btn-view" data-no="' + order.order_no + '">查看</button>');
           actions.push('<button type="button" class="btn btn-secondary btn-sm btn-history" data-no="' + order.order_no + '">历史</button>');
-          if (isUploader() && order.submitted_by === currentUser.username && (order.overall_status === "in_progress" || order.overall_status === "rejected")) {
-            // 删除按钮
+          // 删除：操作员自己的非完成单据，或管理员（任意单据）
+          if ((isUploader() && order.submitted_by === currentUser.username && order.overall_status !== "completed") || isReviewer()) {
+            actions.push('<button type="button" class="btn btn-danger btn-sm btn-delete-order" data-no="' + order.order_no + '">删除</button>');
           }
 
           card.innerHTML = '<div class="order-card-body">' +
@@ -1218,6 +1265,125 @@
           const orderNo = e.currentTarget.dataset.no;
           showQRCode(orderNo);
         }));
+        document.querySelectorAll(".btn-view").forEach((btn) => btn.addEventListener("click", async (e) => {
+          const orderNo = e.currentTarget.dataset.no;
+          await openViewModal(orderNo);
+        }));
+        document.querySelectorAll(".btn-delete-order").forEach((btn) => btn.addEventListener("click", (e) => {
+          pendingDeleteOrderNo = e.currentTarget.dataset.no;
+          openModal(confirmModal);
+        }));
+      }
+
+      async function openViewModal(orderNo) {
+        const orders = await loadOrdersFromCloud();
+        const order = orders.find((o) => o.order_no === orderNo);
+        if (!order) { showToast("单据不存在", "error"); return; }
+        const history = await loadHistory(orderNo);
+        document.getElementById("view-modal-title").textContent = "单据详情 - " + order.order_no;
+        document.getElementById("view-modal-content").innerHTML = renderOrderDetailHTML(order, history);
+        openModal(document.getElementById("view-modal"));
+      }
+
+      function fileLinksHTML(arr) {
+        if (!Array.isArray(arr) || arr.length === 0) return "-";
+        return arr.map((f) => {
+          const isImg = (f.type || "").startsWith("image/") || /\.(jpg|jpeg|png)$/i.test(f.name || "");
+          if (isImg) return '<a href="' + escapeHtml(f.url) + '" target="_blank"><img src="' + escapeHtml(f.url) + '" class="view-img-preview" /></a>';
+          return '<a class="view-file-link" href="' + escapeHtml(f.url) + '" target="_blank">📄 ' + escapeHtml(f.name) + '</a>';
+        }).join(" ");
+      }
+
+      function renderOrderDetailHTML(order, history) {
+        const projectType = PROJECT_TYPE_LABEL[order.project_type] || order.project_type;
+        const overallStatus = OVERALL_STATUS_LABEL[order.overall_status] || order.overall_status;
+        const data = (s) => {
+          try { return typeof s.stage_data === "string" ? JSON.parse(s.stage_data) : (s.stage_data || {}); }
+          catch (e) { return {}; }
+        };
+        const attachments = (s) => {
+          try { const a = typeof s.attachments === "string" ? JSON.parse(s.attachments) : (s.attachments || []); return Array.isArray(a) ? a : []; }
+          catch (e) { return []; }
+        };
+
+        let html = '<div class="view-banner">' +
+          '<div class="view-banner-title">' + escapeHtml(projectType) + ' · ' + escapeHtml(order.factory_name || "") + '</div>' +
+          '<div class="view-banner-meta">' + escapeHtml(order.project_name || "") + ' · ' + escapeHtml(order.material_name || "") + '</div>' +
+          '<div class="view-banner-tags">' +
+            '<span class="view-tag">单据号：' + escapeHtml(order.order_no) + '</span>' +
+            '<span class="view-tag">状态：' + escapeHtml(overallStatus) + '</span>' +
+            '<span class="view-tag">当前阶段：' + escapeHtml(STAGES[order.current_stage] ? STAGES[order.current_stage].name : order.current_stage) + '</span>' +
+          '</div>' +
+          '</div>';
+
+        html += '<div class="view-section-title">基础信息</div>';
+        html += '<div class="view-row"><div class="view-label">工厂</div><div class="view-value">' + escapeHtml(order.factory_name || "-") + '</div></div>';
+        html += '<div class="view-row"><div class="view-label">项目</div><div class="view-value">' + escapeHtml(order.project_name || "-") + '</div></div>';
+        html += '<div class="view-row"><div class="view-label">材料</div><div class="view-value">' + escapeHtml(order.material_name || "-") + '</div></div>';
+        html += '<div class="view-row"><div class="view-label">材料参数</div><div class="view-value">' + escapeHtml(order.material_params || "-") + '</div></div>';
+        html += '<div class="view-row"><div class="view-label">面层效果</div><div class="view-value">' + escapeHtml(order.surface_effect || "-") + '</div></div>';
+        html += '<div class="view-row"><div class="view-label">批次</div><div class="view-value">' + escapeHtml(order.batch || "-") + '</div></div>';
+        html += '<div class="view-row"><div class="view-label">数量</div><div class="view-value">' + escapeHtml(order.quantity || "-") + '</div></div>';
+        html += '<div class="view-row"><div class="view-label">开始生产</div><div class="view-value">' + escapeHtml(order.production_start_time || "-") + '</div></div>';
+        if (order.seal_photo_url) html += '<div class="view-row"><div class="view-label">封样照片</div><div class="view-value"><a href="' + escapeHtml(order.seal_photo_url) + '" target="_blank"><img src="' + escapeHtml(order.seal_photo_url) + '" class="view-img-preview" /></a></div></div>';
+        if (order.remarks) html += '<div class="view-row"><div class="view-label">备注</div><div class="view-value">' + escapeHtml(order.remarks) + '</div></div>';
+
+        html += '<div class="view-section-title">阶段详情</div>';
+        if (!order.stages || order.stages.length === 0) {
+          html += '<div style="color:#6b7280;font-size:14px;">暂无阶段数据</div>';
+        } else {
+          order.stages.forEach((s) => {
+            const d = data(s);
+            const atts = attachments(s);
+            const status = s.approval_status || "draft";
+            const statusLabel = { pending: "待审批", approved: "已通过", rejected: "已驳回", draft: "草稿" }[status] || status;
+            html += '<div class="view-stage-block ' + status + '">';
+            html += '<div class="view-stage-header"><div class="view-stage-name">' + escapeHtml(STAGES[s.stage_name] ? STAGES[s.stage_name].name : s.stage_name) + '</div><div class="view-stage-status ' + status + '">' + escapeHtml(statusLabel) + '</div></div>';
+            if (s.stage_name === "basic") {
+              if (d.material_params) html += '<div class="view-row"><div class="view-label">参数</div><div class="view-value">' + escapeHtml(d.material_params) + '</div></div>';
+              if (d.surface_effect) html += '<div class="view-row"><div class="view-label">面层效果</div><div class="view-value">' + escapeHtml(d.surface_effect) + '</div></div>';
+              if (d.batch) html += '<div class="view-row"><div class="view-label">批次</div><div class="view-value">' + escapeHtml(d.batch) + '</div></div>';
+              if (d.quantity) html += '<div class="view-row"><div class="view-label">数量</div><div class="view-value">' + escapeHtml(d.quantity) + '</div></div>';
+              if (d.remarks) html += '<div class="view-row"><div class="view-label">备注</div><div class="view-value">' + escapeHtml(d.remarks) + '</div></div>';
+              if (Array.isArray(d.seal_photo) && d.seal_photo.length > 0) html += '<div class="view-row"><div class="view-label">封样照片</div><div class="view-value">' + fileLinksHTML(d.seal_photo) + '</div></div>';
+            } else if (s.stage_name === "second_check") {
+              if (d.front_result) html += '<div class="view-row"><div class="view-label">前段</div><div class="view-value">' + escapeHtml(d.front_result) + '</div></div>';
+              if (d.middle_result) html += '<div class="view-row"><div class="view-label">中段</div><div class="view-value">' + escapeHtml(d.middle_result) + '</div></div>';
+              if (d.back_result) html += '<div class="view-row"><div class="view-label">后段</div><div class="view-value">' + escapeHtml(d.back_result) + '</div></div>';
+              if (d.remarks) html += '<div class="view-row"><div class="view-label">备注</div><div class="view-value">' + escapeHtml(d.remarks) + '</div></div>';
+              if (Array.isArray(d.front_files) && d.front_files.length > 0) html += '<div class="view-row"><div class="view-label">前段附件</div><div class="view-value">' + fileLinksHTML(d.front_files) + '</div></div>';
+              if (Array.isArray(d.middle_files) && d.middle_files.length > 0) html += '<div class="view-row"><div class="view-label">中段附件</div><div class="view-value">' + fileLinksHTML(d.middle_files) + '</div></div>';
+              if (Array.isArray(d.back_files) && d.back_files.length > 0) html += '<div class="view-row"><div class="view-label">后段附件</div><div class="view-value">' + fileLinksHTML(d.back_files) + '</div></div>';
+            } else {
+              if (d.result_description) html += '<div class="view-row"><div class="view-label">检测结果</div><div class="view-value">' + escapeHtml(d.result_description) + '</div></div>';
+              if (d.remarks) html += '<div class="view-row"><div class="view-label">备注</div><div class="view-value">' + escapeHtml(d.remarks) + '</div></div>';
+            }
+            if (atts.length > 0) html += '<div class="view-row"><div class="view-label">附件</div><div class="view-value">' + fileLinksHTML(atts) + '</div></div>';
+            if (s.submitted_by) {
+              html += '<div class="view-row"><div class="view-label">提交人</div><div class="view-value">' + escapeHtml(s.submitted_by) + '</div></div>';
+              html += '<div class="view-row"><div class="view-label">提交时间</div><div class="view-value">' + formatDate(s.submitted_at) + '</div></div>';
+            }
+            if (s.reviewed_by) {
+              html += '<div class="view-row"><div class="view-label">审批人</div><div class="view-value">' + escapeHtml(s.reviewed_by) + '</div></div>';
+              html += '<div class="view-row"><div class="view-label">审批时间</div><div class="view-value">' + formatDate(s.reviewed_at) + '</div></div>';
+            }
+            if (s.review_comment) html += '<div class="view-row"><div class="view-label">审批意见</div><div class="view-value">' + escapeHtml(s.review_comment) + '</div></div>';
+            html += '</div>';
+          });
+        }
+
+        if (history && history.length > 0) {
+          html += '<div class="view-section-title">审批历史</div>';
+          history.forEach((h) => {
+            const actionLabel = { submit: "提交", approve: "通过", reject: "驳回", modify_approve: "修改后通过", save_draft: "保存草稿" }[h.action] || h.action;
+            const stageName = STAGES[h.stage_name] ? STAGES[h.stage_name].name : h.stage_name;
+            html += '<div class="view-history-item"><strong>' + escapeHtml(actionLabel) + '</strong> · ' + escapeHtml(stageName) +
+              '<div class="view-history-time">' + formatDate(h.created_at) + ' · ' + escapeHtml(h.approver || "-") + '</div>' +
+              (h.comment ? '<div style="margin-top:4px;color:#374151;">' + escapeHtml(h.comment) + '</div>' : '') +
+              '</div>';
+          });
+        }
+        return html;
       }
 
       // ====== 审批详情弹窗 ======
@@ -1420,6 +1586,7 @@
       btnApprovalReject.addEventListener("click", () => handleApproval("reject"));
       btnHistoryClose.addEventListener("click", () => closeModal(historyModal));
       btnQrClose.addEventListener("click", () => closeModal(qrModal));
+      document.getElementById("btn-view-close").addEventListener("click", () => closeModal(document.getElementById("view-modal")));
       btnDownloadQr.addEventListener("click", downloadQR);
       btnCancelDelete.addEventListener("click", () => closeModal(confirmModal));
       btnConfirmDelete.addEventListener("click", async () => {
