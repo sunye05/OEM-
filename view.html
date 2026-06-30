@@ -9,9 +9,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, "Microsoft YaHei", sans-serif; background: #eef3fb; padding: 20px; min-height: 100vh; }
     .container { max-width: 800px; margin: 0 auto; }
-    .brand-bar { background: #003894; color: #fff; padding: 24px 32px; text-align: center; border-radius: 16px 16px 0 0; box-shadow: 0 8px 24px rgba(0, 56, 148, 0.18); }
-    .brand-bar h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
-    .brand-bar p { font-size: 13px; opacity: 0.9; letter-spacing: 4px; }
+    .brand-bar { display: none; }
     .card { background: #fff; border-radius: 0 0 16px 16px; box-shadow: 0 8px 24px rgba(0, 56, 148, 0.18); overflow: hidden; }
     .banner { background: linear-gradient(135deg, #003894 0%, #0050b0 50%, #00B0AF 100%); color: #fff; padding: 28px 36px; }
     .banner-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
@@ -40,8 +38,7 @@
     .file-link:hover { background: #bfdbfe; }
     .footer-bar { padding: 18px 36px; background: #003894; color: #fff; font-size: 12px; text-align: center; letter-spacing: 2px; }
     .footer-bar strong { color: #00B0AF; font-weight: 700; }
-    .slogan { text-align: center; padding: 16px; color: #6b7280; font-size: 14px; letter-spacing: 3px; }
-    .slogan strong { color: #003894; }
+    .slogan { display: none; }
     .empty { text-align: center; padding: 60px 20px; color: #6b7280; }
     .loading { text-align: center; padding: 40px; color: #003894; }
     .image-preview { max-width: 200px; max-height: 200px; border-radius: 6px; margin-top: 6px; }
@@ -49,14 +46,9 @@
 </head>
 <body>
   <div class="container">
-    <div class="brand-bar">
-      <h1>LONGFOR 龙湖</h1>
-      <p>善待你一生</p>
-    </div>
     <div class="card" id="main-card">
       <div class="loading">加载中...</div>
     </div>
-    <div class="slogan"><strong>善待你一生</strong> · LONGFOR 龙湖</div>
   </div>
   <script>
     (function () {
@@ -123,11 +115,17 @@
       function fileLink(f) {
         if (!f || !f.url) return "";
         const name = f.name || "文件";
-        const isImg = (f.type || "").startsWith("image/") || /\.(jpg|jpeg|png)$/i.test(name);
-        const inner = isImg
-          ? '<a href="' + escapeHtml(f.url) + '" target="_blank"><img src="' + escapeHtml(f.url) + '" class="image-preview" /></a>'
-          : '<a class="file-link" href="' + escapeHtml(f.url) + '" target="_blank">📄 ' + escapeHtml(name) + '</a>';
-        return inner;
+        const lower = name.toLowerCase();
+        const isImg = (f.type || "").startsWith("image/") || /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
+        const isPdf = /\.pdf$/i.test(name);
+        if (isImg) {
+          return '<a href="' + escapeHtml(f.url) + '" target="_blank"><img src="' + escapeHtml(f.url) + '" class="image-preview" /></a>';
+        }
+        if (isPdf) {
+          return '<a class="file-link" href="' + escapeHtml(f.url) + '" target="_blank">📄 ' + escapeHtml(name) + '（PDF 在线预览）</a>';
+        }
+        // Excel/Word/其他：触发下载
+        return '<a class="file-link" href="' + escapeHtml(f.url) + '" download="' + escapeHtml(name) + '" target="_blank">📎 ' + escapeHtml(name) + '（点击下载）</a>';
       }
 
       function render(order, stages, history) {
@@ -148,7 +146,7 @@
 
         let html = '<div class="banner">' +
           '<div class="banner-title">OEM 品控单据</div>' +
-          '<div class="banner-sub">远程质量管控 · 生产追溯 · 实时品控，全程可溯</div>' +
+          '<div class="banner-sub">实时品控 · 全程可溯</div>' +
           '<div class="tags">' +
             '<span class="tag">单据号：' + escapeHtml(order.order_no) + '</span>' +
             '<span class="tag">' + escapeHtml(projectType) + '</span>' +
