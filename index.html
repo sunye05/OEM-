@@ -654,9 +654,11 @@
         if (!supabaseClient) return { success: false, message: "云服务未连接" };
         try {
           const hash = await hashPassword(password);
-          const { data, error } = await supabaseClient.from(SUPABASE_USERS_TABLE)
-            .select("*").eq("username", username).eq("password_hash", hash).eq("is_active", true).maybeSingle();
-          if (error) throw error;
+          // 查询所有匹配用户名的记录（兼容大小写）
+          const { data: candidates, error: qErr } = await supabaseClient.from(SUPABASE_USERS_TABLE)
+            .select("*").eq("username", username).eq("is_active", true);
+          if (qErr) throw qErr;
+          const data = (candidates || []).find((u) => u.password_hash === hash);
           if (!data) return { success: false, message: "用户名或密码错误" };
           // 更新最后登录时间
           await supabaseClient.from(SUPABASE_USERS_TABLE).update({ last_login_at: Date.now() }).eq("id", data.id);
@@ -1305,8 +1307,6 @@
             } else {
               nextActionText = overallStatus;
             }
-              nextActionText = overallStatus;
-            }
           }
 
           const actions = [];
@@ -1668,6 +1668,10 @@
         loginError.textContent = "登录中...";
         const username = loginUsername.value.trim();
         const password = loginPassword.value;
+        if (!supabaseClient) {
+          const ready = await initSupabase();
+          if (!ready) { loginError.textContent = "云服务连接失败"; return; }
+        }
         const result = await login(username, password);
         if (result.success) {
           loginError.textContent = "";
