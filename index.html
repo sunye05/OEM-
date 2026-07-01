@@ -287,6 +287,7 @@
         <div class="notification-badge hidden" id="pending-badge">
           <button type="button" id="btn-pending-list">待审批 <span class="badge-count" id="pending-count">0</span></button>
         </div>
+        <button type="button" class="btn-logout reviewer-only hidden" id="btn-manage-users">👥 账户管理</button>
         <button type="button" class="btn-logout" id="btn-logout">退出登录</button>
       </div>
     </div>
@@ -382,6 +383,44 @@
     </div>
   </div>
 
+  <!-- 账户管理弹窗（仅管理员） -->
+  <div class="modal-overlay" id="users-modal">
+    <div class="modal" style="max-width: 820px;">
+      <div class="modal-title">操作员账户管理</div>
+      <div style="margin-bottom:16px;">
+        <button type="button" class="btn btn-primary btn-sm" id="btn-add-user">➕ 新增操作员</button>
+      </div>
+      <div id="users-list" style="max-height:50vh;overflow-y:auto;"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-users-close">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 操作员编辑弹窗 -->
+  <div class="modal-overlay" id="user-edit-modal">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-title" id="user-edit-title">新增操作员</div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label class="form-label required">用户名</label>
+        <input type="text" id="user-edit-username" class="form-control" placeholder="字母或数字，例如 worker01" />
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label class="form-label">显示名称</label>
+        <input type="text" id="user-edit-displayname" class="form-control" placeholder="例如 张三" />
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label class="form-label required">密码</label>
+        <input type="password" id="user-edit-password" class="form-control" placeholder="至少 4 位" />
+      </div>
+      <div id="user-edit-error" style="color:#ef4444;font-size:13px;min-height:18px;margin-bottom:8px;"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-user-edit-cancel">取消</button>
+        <button type="button" class="btn btn-primary btn-sm" id="btn-user-edit-save">保存</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 二维码弹窗 -->
   <div class="modal-overlay" id="qr-modal">
     <div class="modal" style="max-width: 420px;">
@@ -428,15 +467,26 @@
       const SUPABASE_TABLE = "qc_records";
       const SUPABASE_STAGES_TABLE = "qc_stages";
       const SUPABASE_APPROVALS_TABLE = "qc_approvals";
+      const SUPABASE_USERS_TABLE = "qc_users";
       const STORAGE_BUCKET = "qc-attachments";
       const PUBLIC_VIEW_URL = "https://sunye05.github.io/OEM-/view.html";
+      const PASSWORD_SALT = "longfor_oem_2026";
 
       const STORAGE_KEY_USER = "longfor_oem_user";
 
-      const ACCOUNTS = [
-        { username: "admin", password: "longfor2026", role: "admin" },
-        { username: "operator", password: "longfor2026", role: "operator" }
-      ];
+      // 角色常量
+      const ROLE = {
+        UPLOADER: "uploader",   // 操作员（上传数据）
+        REVIEWER: "reviewer"    // 管理员（审批）
+      };
+
+      // 系统内置管理员账户（首次启动时自动创建到数据库）
+      const SYSTEM_ADMIN = {
+        username: "admin",
+        password: "longfor2026",
+        role: ROLE.REVIEWER,
+        display_name: "系统管理员"
+      };
 
       // ====== 阶段定义 ======
       const PROJECT_TYPE = { DOMESTIC: "domestic", OVERSEAS: "overseas" };
@@ -568,16 +618,62 @@
         try { sessionStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user)); } catch (e) {}
       }
       function clearCurrentUser() { sessionStorage.removeItem(STORAGE_KEY_USER); }
-      function isUploader() { return currentUser && currentUser.role === "admin"; }
-      function isReviewer() { return currentUser && currentUser.role === "operator"; }
+      function isUploader() { return currentUser && currentUser.role === ROLE.UPLOADER; }
+      function isReviewer() { return currentUser && currentUser.role === ROLE.REVIEWER; }
 
-      function login(username, password) {
-        const account = ACCOUNTS.find((a) => a.username === username && a.password === password);
-        if (!account) return { success: false, message: "用户名或密码错误" };
-        currentUser = { role: account.role, username: account.username, loginAt: Date.now() };
-        setCurrentUser(currentUser);
-        return { success: true, role: account.role };
+      // 密码哈希（SHA-256 + salt）
+      async function hashPassword(password) {
+        const data = new TextEncoder().encode(PASSWORD_SALT + password);
+        const hashBuf = await crypto.subtle.digest("SHA-256", data);
+        return Array.from(new Uint8Array(hashBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
       }
+
+      // 系统管理员首次启动时自动注册到数据库
+      async function ensureSystemAdmin() {
+        try {
+          const { data } = await supabaseClient.from(SUPABASE_USERS_TABLE)
+            .select("id").eq("username", SYSTEM_ADMIN.username).maybeSingle();
+          if (!data) {
+            const hash = await hashPassword(SYSTEM_ADMIN.password);
+            await supabaseClient.from(SUPABASE_USERS_TABLE).insert([{
+              id: generateId(),
+              username: SYSTEM_ADMIN.username,
+              password_hash: hash,
+              display_name: SYSTEM_ADMIN.display_name,
+              role: SYSTEM_ADMIN.role,
+              is_active: true,
+              created_at: Date.now(),
+              created_by: "system"
+            }]);
+          }
+        } catch (e) { console.error("Init admin failed", e); }
+      }
+
+      // 从数据库查询账号
+      async function login(username, password) {
+        if (!supabaseClient) return { success: false, message: "云服务未连接" };
+        try {
+          const hash = await hashPassword(password);
+          const { data, error } = await supabaseClient.from(SUPABASE_USERS_TABLE)
+            .select("*").eq("username", username).eq("password_hash", hash).eq("is_active", true).maybeSingle();
+          if (error) throw error;
+          if (!data) return { success: false, message: "用户名或密码错误" };
+          // 更新最后登录时间
+          await supabaseClient.from(SUPABASE_USERS_TABLE).update({ last_login_at: Date.now() }).eq("id", data.id);
+          currentUser = {
+            role: data.role,
+            username: data.username,
+            displayName: data.display_name || data.username,
+            userId: data.id
+          };
+          setCurrentUser(currentUser);
+          return { success: true, role: data.role, displayName: currentUser.displayName };
+        } catch (e) {
+          console.error("Login failed", e);
+          return { success: false, message: "登录失败：" + (e.message || e) };
+        }
+      }
+
       function logout() {
         clearCurrentUser();
         currentUser = null;
@@ -602,9 +698,12 @@
 
       function applyRoleUI() {
         const role = currentUser ? currentUser.role : null;
-        userRole.textContent = role === "admin" ? "操作员" : role === "operator" ? "管理员" : "未登录";
+        userRole.textContent = currentUser ? (currentUser.displayName || currentUser.username) + (role === ROLE.REVIEWER ? "（管理员）" : "（操作员）") : "未登录";
         document.querySelectorAll(".uploader-only").forEach((el) => {
           el.classList.toggle("hidden", !isUploader());
+        });
+        document.querySelectorAll(".reviewer-only").forEach((el) => {
+          el.classList.toggle("hidden", !isReviewer());
         });
       }
 
@@ -620,10 +719,13 @@
       }
 
       function generateOrderNo() {
+        // 格式：LY-YYYY-MMDD-HHmmss-XXXX (XXXX 为4位随机数)
         const now = new Date();
-        const yyyy = now.getFullYear();
-        const seq = String(Date.now()).slice(-6);
-        return "LY-" + yyyy + "-" + seq;
+        const pad = (n) => String(n).padStart(2, "0");
+        const datePart = now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate());
+        const timePart = pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+        const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+        return "LY-" + datePart + "-" + timePart + "-" + rand;
       }
 
       function getStagesForProject(projectType) {
@@ -1203,7 +1305,7 @@
           if (isUploader() && order.submitted_by === currentUser.username) {
             if (order.overall_status !== "completed") {
               const curStage = STAGES[order.current_stage];
-              if (curStage) {
+              if (curStage && (currentStageStatus === "draft" || currentStageStatus === "rejected")) {
                 actions.push('<button type="button" class="btn btn-primary btn-sm btn-continue" data-no="' + order.order_no + '" data-stage="' + order.current_stage + '">继续登记</button>');
               }
             }
@@ -1555,17 +1657,17 @@
       // ====== 事件绑定 ======
       loginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
+        loginError.textContent = "登录中...";
         const username = loginUsername.value.trim();
         const password = loginPassword.value;
-        const result = login(username, password);
+        const result = await login(username, password);
         if (result.success) {
-          const ready = await initSupabase();
-          if (!ready) { loginError.textContent = "云服务连接失败"; return; }
+          loginError.textContent = "";
           showMainApp();
           applyRoleUI();
           await renderOrders();
-          const displayName = result.role === "admin" ? "操作员" : "管理员";
-          showToast("欢迎，" + displayName, "success");
+          const displayName = result.role === ROLE.UPLOADER ? "操作员" : "管理员";
+          showToast("欢迎，" + (result.displayName || displayName), "success");
         } else {
           loginError.textContent = result.message;
           loginPassword.value = "";
@@ -1588,6 +1690,144 @@
       btnQrClose.addEventListener("click", () => closeModal(qrModal));
       document.getElementById("btn-view-close").addEventListener("click", () => closeModal(document.getElementById("view-modal")));
       btnDownloadQr.addEventListener("click", downloadQR);
+      document.getElementById("btn-manage-users").addEventListener("click", openUsersModal);
+      document.getElementById("btn-users-close").addEventListener("click", () => closeModal(document.getElementById("users-modal")));
+      document.getElementById("btn-add-user").addEventListener("click", () => openUserEditModal(null));
+      document.getElementById("btn-user-edit-cancel").addEventListener("click", () => closeModal(document.getElementById("user-edit-modal")));
+      document.getElementById("btn-user-edit-save").addEventListener("click", saveUser);
+
+      // ====== 账户管理（仅管理员） ======
+      async function loadUsers() {
+        try {
+          const { data, error } = await supabaseClient.from(SUPABASE_USERS_TABLE)
+            .select("*").order("created_at", { ascending: false });
+          if (error) throw error;
+          return data || [];
+        } catch (e) { console.error(e); return []; }
+      }
+
+      async function renderUsersList() {
+        const users = await loadUsers();
+        const container = document.getElementById("users-list");
+        if (users.length === 0) {
+          container.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280;">暂无账户</div>';
+          return;
+        }
+        container.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:14px;">' +
+          '<thead><tr style="background:#f3f4f6;"><th style="padding:8px;text-align:left;">用户名</th><th style="padding:8px;text-align:left;">显示名</th><th style="padding:8px;text-align:left;">角色</th><th style="padding:8px;text-align:left;">状态</th><th style="padding:8px;text-align:left;">最后登录</th><th style="padding:8px;text-align:right;">操作</th></tr></thead><tbody>' +
+          users.map((u) => {
+            const isAdmin = u.role === ROLE.REVIEWER;
+            const status = u.is_active ? '<span style="color:#10b981;">启用</span>' : '<span style="color:#ef4444;">停用</span>';
+            const lastLogin = u.last_login_at ? formatDate(u.last_login_at) : "-";
+            return '<tr style="border-bottom:1px solid #e5e7eb;">' +
+              '<td style="padding:8px;"><strong>' + escapeHtml(u.username) + '</strong></td>' +
+              '<td style="padding:8px;">' + escapeHtml(u.display_name || "-") + '</td>' +
+              '<td style="padding:8px;">' + (isAdmin ? "管理员" : "操作员") + '</td>' +
+              '<td style="padding:8px;">' + status + '</td>' +
+              '<td style="padding:8px;">' + lastLogin + '</td>' +
+              '<td style="padding:8px;text-align:right;">' +
+                '<button type="button" class="btn btn-secondary btn-sm btn-edit-user" data-id="' + u.id + '">重置密码</button> ' +
+                '<button type="button" class="btn btn-warning btn-sm btn-toggle-user" data-id="' + u.id + '" data-active="' + u.is_active + '">' + (u.is_active ? "停用" : "启用") + '</button>' +
+              '</td></tr>';
+          }).join("") +
+          '</tbody></table>';
+        bindUserActions();
+      }
+
+      function bindUserActions() {
+        document.querySelectorAll(".btn-edit-user").forEach((btn) => btn.addEventListener("click", () => openUserEditModal(btn.dataset.id)));
+        document.querySelectorAll(".btn-toggle-user").forEach((btn) => btn.addEventListener("click", async () => {
+          const id = btn.dataset.id;
+          const active = btn.dataset.active === "true";
+          if (!confirm("确定要" + (active ? "停用" : "启用") + "该账户？")) return;
+          const { error } = await supabaseClient.from(SUPABASE_USERS_TABLE).update({ is_active: !active }).eq("id", id);
+          if (error) { showToast("操作失败", "error"); return; }
+          showToast("已" + (active ? "停用" : "启用"), "success");
+          await renderUsersList();
+        }));
+      }
+
+      function openUsersModal() {
+        renderUsersList();
+        openModal(document.getElementById("users-modal"));
+      }
+
+      async function openUserEditModal(userId) {
+        document.getElementById("user-edit-error").textContent = "";
+        document.getElementById("user-edit-username").value = "";
+        document.getElementById("user-edit-displayname").value = "";
+        document.getElementById("user-edit-password").value = "";
+        document.getElementById("user-edit-username").disabled = false;
+        document.getElementById("user-edit-title").textContent = "新增操作员";
+        if (userId) {
+          document.getElementById("user-edit-title").textContent = "重置密码";
+          document.getElementById("user-edit-username").disabled = true;
+          const users = await loadUsers();
+          const u = users.find((x) => x.id === userId);
+          if (u) {
+            document.getElementById("user-edit-username").value = u.username;
+            document.getElementById("user-edit-displayname").value = u.display_name || "";
+          }
+        }
+        document.getElementById("user-edit-modal").dataset.userId = userId || "";
+        openModal(document.getElementById("user-edit-modal"));
+      }
+
+      async function saveUser() {
+        const userId = document.getElementById("user-edit-modal").dataset.userId;
+        const username = document.getElementById("user-edit-username").value.trim();
+        const displayName = document.getElementById("user-edit-displayname").value.trim();
+        const password = document.getElementById("user-edit-password").value;
+        const errEl = document.getElementById("user-edit-error");
+        errEl.textContent = "";
+
+        if (!userId && (!username || !password)) {
+          errEl.textContent = "请填写用户名和密码";
+          return;
+        }
+        if (password && password.length < 4) {
+          errEl.textContent = "密码至少 4 位";
+          return;
+        }
+        if (!userId && !/^[a-zA-Z0-9_]+$/.test(username)) {
+          errEl.textContent = "用户名只能是字母数字下划线";
+          return;
+        }
+
+        try {
+          if (userId) {
+            // 重置密码
+            const updates = {};
+            if (password) updates.password_hash = await hashPassword(password);
+            if (displayName) updates.display_name = displayName;
+            const { error } = await supabaseClient.from(SUPABASE_USERS_TABLE).update(updates).eq("id", userId);
+            if (error) throw error;
+            showToast("已更新", "success");
+          } else {
+            const hash = await hashPassword(password);
+            const { error } = await supabaseClient.from(SUPABASE_USERS_TABLE).insert([{
+              id: generateId(),
+              username,
+              password_hash: hash,
+              display_name: displayName || username,
+              role: ROLE.UPLOADER,
+              is_active: true,
+              created_at: Date.now(),
+              created_by: currentUser.username
+            }]);
+            if (error) throw error;
+            showToast("操作员创建成功", "success");
+          }
+          closeModal(document.getElementById("user-edit-modal"));
+          await renderUsersList();
+        } catch (e) {
+          if (e.message && e.message.includes("duplicate")) {
+            errEl.textContent = "用户名已存在";
+          } else {
+            errEl.textContent = "保存失败：" + (e.message || e);
+          }
+        }
+      }
       btnCancelDelete.addEventListener("click", () => closeModal(confirmModal));
       btnConfirmDelete.addEventListener("click", async () => {
         if (pendingDeleteOrderNo) {
@@ -1618,11 +1858,12 @@
 
       // ====== 初始化 ======
       async function init() {
+        const ready = await initSupabase();
+        if (!ready) { showLoginScreen(); return; }
+        await ensureSystemAdmin();
         const user = getCurrentUser();
-        if (user) {
+        if (user && user.userId) {
           currentUser = user;
-          const ready = await initSupabase();
-          if (!ready) { showLoginScreen(); return; }
           showMainApp();
           applyRoleUI();
           await renderOrders();
