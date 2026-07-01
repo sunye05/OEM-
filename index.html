@@ -482,7 +482,7 @@
 
       // 系统内置管理员账户（首次启动时自动创建到数据库）
       const SYSTEM_ADMIN = {
-        username: "admin",
+        username: "LONGFOR",
         password: "longfor2026",
         role: ROLE.REVIEWER,
         display_name: "系统管理员"
@@ -1294,9 +1294,17 @@
               else nextActionText = "✅ 已完成";
             }
           } else if (isReviewer()) {
-            if (currentStageStatus === "pending") {
+            if (order.overall_status === "completed" || order.current_stage === "completed") {
+              nextActionText = "✅ 已完成";
+            } else if (currentStageStatus === "pending") {
               nextActionText = "📋 待您审批";
+            } else if (currentStageStatus === "rejected") {
+              nextActionText = "⚠️ 当前阶段被驳回";
+            } else if (currentStageStatus === "approved") {
+              nextActionText = "⏳ 等待操作员登记下一阶段";
             } else {
+              nextActionText = overallStatus;
+            }
               nextActionText = overallStatus;
             }
           }
