@@ -1201,11 +1201,14 @@
       // ====== 渲染单据列表 ======
       async function renderOrders() {
         const orders = await loadOrdersFromCloud();
-        // 角色过滤
-        let filtered = orders;
+        // 角色过滤：操作员只看自己的单据
+        let myOrders = orders;
         if (isUploader()) {
-          filtered = orders.filter((o) => o.submitted_by === currentUser.username);
+          myOrders = orders.filter((o) => o.submitted_by === currentUser.username);
         }
+
+        // 在"我的单据"基础上应用筛选条件
+        let filtered = myOrders;
         if (filters.keyword) {
           const kw = filters.keyword.toLowerCase();
           filtered = filtered.filter((o) =>
@@ -1222,17 +1225,18 @@
           filtered = filtered.filter((o) => o.overall_status === filters.overallStatus);
         }
 
-        renderStats(filtered, orders);
+        // 统计数据基于"我的单据"（隔离），列表显示筛选后结果
+        renderStats(myOrders);
         renderOrdersList(filtered);
-        updatePendingBadge(orders);
+        updatePendingBadge(myOrders);
       }
 
-      function renderStats(displayed, all) {
-        const allOrders = all || displayed;
-        document.getElementById("stat-total").textContent = allOrders.length;
-        document.getElementById("stat-progress").textContent = allOrders.filter((o) => o.overall_status === "in_progress").length;
-        document.getElementById("stat-completed").textContent = allOrders.filter((o) => o.overall_status === "completed").length;
-        const pendingCount = allOrders.reduce((sum, o) => {
+      function renderStats(myOrders) {
+        // 只统计当前用户能看到的单据（操作员只看自己的，管理员看全部）
+        document.getElementById("stat-total").textContent = myOrders.length;
+        document.getElementById("stat-progress").textContent = myOrders.filter((o) => o.overall_status === "in_progress").length;
+        document.getElementById("stat-completed").textContent = myOrders.filter((o) => o.overall_status === "completed").length;
+        const pendingCount = myOrders.reduce((sum, o) => {
           if (o.overall_status === "completed" || o.current_stage === "completed") return sum;
           return sum + (o.stages || []).filter((s) => s.approval_status === "pending").length;
         }, 0);
